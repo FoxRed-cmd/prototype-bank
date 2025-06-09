@@ -23,9 +23,14 @@ public class CalculatorController {
 
     @PostMapping("/offers")
     public ResponseEntity<List<LoanOfferDto>> offers(
-            @Valid @RequestBody LoanStatementRequestDto request) {
+            @Valid @RequestBody LoanStatementRequestDto loanStatementData) {
 
-        return ResponseEntity.ok(calculatorService.getPrescoringResults(request));
+        return ResponseEntity.ok(calculatorService.getPrescoringResults(loanStatementData));
+    }
+
+    @PostMapping("/calc")
+    public ResponseEntity<CreditDto> calc(@Valid @RequestBody ScoringDataDto scoringData) {
+        return ResponseEntity.ok(calculatorService.getScoringResult(scoringData));
     }
 
 }
