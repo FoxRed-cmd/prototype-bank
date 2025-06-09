@@ -1,0 +1,240 @@
+package neo.study.calculator.utils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import neo.study.calculator.dto.LoanOfferDto;
+import neo.study.calculator.dto.LoanStatementRequestDto;
+import neo.study.calculator.dto.PaymentScheduleElementDto;
+import neo.study.calculator.dto.ScoringDataDto;
+import neo.study.calculator.enums.Gender;
+
+@Component
+public class CreditCalculationHelper {
+    private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
+    private static final BigDecimal PERCENT_DIVISOR = BigDecimal.valueOf(100);
+
+    private static final BigDecimal INCREASE_FOR_SELF_EMPLOYED = BigDecimal.valueOf(2.0);
+    private static final BigDecimal INCREASE_FOR_BUSINESS_OWNER = BigDecimal.valueOf(1.0);
+    private static final BigDecimal INCREASE_FOR_EMPLOYED = BigDecimal.valueOf(0.5);
+    private static final BigDecimal DECREASE_MIDDLE_MANAGER = BigDecimal.valueOf(2.0);
+    private static final BigDecimal DECREASE_FOR_TOP_MANAGER = BigDecimal.valueOf(3.0);
+    private static final BigDecimal DECREASE_FOR_MARRIED = BigDecimal.valueOf(3.0);
+    private static final BigDecimal INCREASE_FOR_DIVORCED = BigDecimal.valueOf(1.0);
+    private static final BigDecimal DECREASE_FOR_FEMALE = BigDecimal.valueOf(3.0);
+    private static final BigDecimal DECREASE_FOR_MALE = BigDecimal.valueOf(3.0);
+
+    private static final int MIN_AGE_FOR_MALE = 30;
+    private static final int MAX_AGE_FOR_MALE = 55;
+    private static final int MIN_AGE_FOR_FEMALE = 32;
+    private static final int MAX_AGE_FOR_FEMALE = 60;
+
+    private static final Integer ACCURACY_IN_CALCULATION = 10;
+    private static final Integer ACCURACY_IN_RESULT = 2;
+
+    @Value("${loan.base-rate}")
+    private double baseRate;
+
+    @Value("${loan.insurance-discount}")
+    private double insuranceDiscount;
+
+    @Value("${loan.salary-client-discount}")
+    private double salaryClientDiscount;
+
+    @Value("${loan.insurance-cost-percent}")
+    private double insuranceCostPercent;
+
+    public LoanOfferDto createOffer(LoanStatementRequestDto request, boolean isInsuranceEnabled,
+            boolean isSalaryClient) {
+
+        BigDecimal rate = BigDecimal.valueOf(baseRate);
+
+        rate = calculateRate(isInsuranceEnabled, isSalaryClient);
+
+        BigDecimal totalAmount = calculateTotalAmount(isInsuranceEnabled, request.getAmount());
+
+        return LoanOfferDto.builder().statementId(UUID.randomUUID())
+                .requestedAmount(request.getAmount()).totalAmount(totalAmount)
+                .term(request.getTerm())
+                .monthlyPayment(calculateMonthlyPayment(totalAmount, rate, request.getTerm()))
+                .rate(rate).isInsuranceEnabled(isInsuranceEnabled).isSalaryClient(isSalaryClient)
+                .build();
+    }
+
+    /*
+     * Расчет ежемесячного платежа
+     *
+     * totalAmount * (monthlyRate * (1 + monthlyRate)^term) / ((1 + monthlyRate)^term - 1)
+     *
+     * Где: totalAmount - сумма кредита, monthlyRate - месячная процентная ставка (rate / 12 * 100)
+     * rate - количество месяцев (срок кредитования).
+     */
+    public BigDecimal calculateMonthlyPayment(BigDecimal totalAmount, BigDecimal rate,
+            Integer term) {
+
+        BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
+                ACCURACY_IN_CALCULATION, RoundingMode.UP);
+        BigDecimal subCoefficient = monthlyRate.add(BigDecimal.ONE).pow(term)
+                .setScale(ACCURACY_IN_CALCULATION, RoundingMode.UP);
+        BigDecimal coefficient = totalAmount.multiply((monthlyRate.multiply(subCoefficient)).divide(
+                subCoefficient.subtract(BigDecimal.ONE), ACCURACY_IN_CALCULATION, RoundingMode.UP));
+
+        return coefficient.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+    }
+
+    /*
+     * Расчет ставки с учетом страховки и ставки для зарплатных клиентов
+     */
+
+    public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
+
+        BigDecimal rate = BigDecimal.valueOf(baseRate);
+
+        if (isInsuranceEnabled) {
+            rate = rate.subtract(BigDecimal.valueOf(insuranceDiscount));
+        }
+
+        if (isSalaryClient) {
+            rate = rate.subtract(BigDecimal.valueOf(salaryClientDiscount));
+        }
+
+        return rate;
+    }
+
+    /*
+     * Расчет ставки с учетом всех правил скоринга
+     */
+
+    public BigDecimal calculateRate(ScoringDataDto scoringData) {
+        BigDecimal rate =
+                calculateRate(scoringData.getIsInsuranceEnabled(), scoringData.getIsSalaryClient());
+
+        rate = switch (scoringData.getEmployment().getEmploymentStatus()) {
+            case SELF_EMPLOYED -> rate.add(INCREASE_FOR_SELF_EMPLOYED);
+            case BUSINESS_OWNER -> rate.add(INCREASE_FOR_BUSINESS_OWNER);
+            case EMPLOYED -> rate.add(INCREASE_FOR_EMPLOYED);
+            default -> rate;
+        };
+
+        rate = switch (scoringData.getEmployment().getPosition()) {
+            case MIDDLE_MANAGER -> rate.subtract(DECREASE_MIDDLE_MANAGER);
+            case TOP_MANAGER -> rate.subtract(DECREASE_FOR_TOP_MANAGER);
+            default -> rate;
+        };
+
+        rate = switch (scoringData.getMaritalStatus()) {
+            case MARRIED -> rate.subtract(DECREASE_FOR_MARRIED);
+            case DIVORCED -> rate.add(INCREASE_FOR_DIVORCED);
+            default -> rate;
+        };
+
+        int age = Period.between(scoringData.getBirthdate(), LocalDate.now()).getYears();
+
+        if (scoringData.getGender() == Gender.FEMALE
+                && (age >= MIN_AGE_FOR_FEMALE && age <= MAX_AGE_FOR_FEMALE)) {
+            rate = rate.subtract(DECREASE_FOR_FEMALE);
+        } else if (scoringData.getGender() == Gender.MALE
+                && (age >= MIN_AGE_FOR_MALE && age <= MAX_AGE_FOR_MALE)) {
+            rate = rate.subtract(DECREASE_FOR_MALE);
+        }
+
+        return rate.max(BigDecimal.valueOf(5.0));
+    }
+
+    public BigDecimal calculateTotalAmount(boolean isInsuranceEnabled, BigDecimal amount) {
+        BigDecimal insuranceCost = calculateInsuranceCost(isInsuranceEnabled, amount);
+        return amount.add(insuranceCost);
+    }
+
+    /*
+     * Расчет стоимости страховки
+     *
+     * amount * (insuranceCostPercent / 100)
+     *
+     * Где: amount - сумма кредита, insuranceCostPercent - процент стоимости страховки
+     */
+    public BigDecimal calculateInsuranceCost(boolean isInsuranceEnabled, BigDecimal amount) {
+
+        if (isInsuranceEnabled) {
+            return amount.multiply(
+                    BigDecimal.valueOf(insuranceCostPercent / PERCENT_DIVISOR.intValue()));
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    /*
+     * Расчет ПСК
+     *
+     * (totalPayments - totalAmount) / totalAmount * (12 / term) * 100%
+     *
+     * Где: totalPayments - общая сумма платежей, totalAmount - сумма кредита, term - количество
+     * месяцев
+     */
+    public BigDecimal calculatePsk(BigDecimal monthlyPayment, Integer term,
+            BigDecimal totalAmount) {
+        BigDecimal totalPayments = monthlyPayment.multiply(BigDecimal.valueOf(term));
+
+        // ПСК =
+        BigDecimal psk = totalPayments.subtract(totalAmount)
+                .divide(totalAmount, ACCURACY_IN_CALCULATION, RoundingMode.UP)
+                .multiply(MONTHS_IN_YEAR)
+                .divide(BigDecimal.valueOf(term), ACCURACY_IN_CALCULATION, RoundingMode.UP)
+                .multiply(PERCENT_DIVISOR);
+
+        return psk.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+    }
+
+    /*
+     * Генерация расписания платежей
+     *
+     * Расчет начисленных процентов
+     *
+     * interestPayment = remainingDebt * (rate / 12 * 100)
+     *
+     * remainingDebt = remainingDebt - debtPayment
+     *
+     * Где: rate - количество месяцев (срок кредитования), remainingDebt - остаток долга
+     *
+     *
+     * Расчет оплаты долга
+     *
+     * debtPayment = monthlyPayment - interestPayment
+     *
+     * Где: debtPayment - оплата долга, monthlyPayment - ежемесячный платеж, interestPayment
+     * начисленные проценты
+     */
+
+    public List<PaymentScheduleElementDto> generatePaymentSchedule(BigDecimal totalAmount,
+            BigDecimal rate, Integer term) {
+
+        List<PaymentScheduleElementDto> schedule = new ArrayList<>();
+        BigDecimal remainingDebt = totalAmount;
+        BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
+                ACCURACY_IN_CALCULATION, RoundingMode.UP);
+        BigDecimal monthlyPayment = calculateMonthlyPayment(totalAmount, rate, term);
+        LocalDate currentDate = LocalDate.now().plusMonths(1);
+
+        for (int i = 1; i <= term; i++) {
+            BigDecimal interestPayment = remainingDebt.multiply(monthlyRate)
+                    .setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+            BigDecimal debtPayment = monthlyPayment.subtract(interestPayment);
+
+            PaymentScheduleElementDto element = PaymentScheduleElementDto.builder().number(i)
+                    .date(currentDate).totalPayment(monthlyPayment).interestPayment(interestPayment)
+                    .debtPayment(debtPayment).remainingDebt(remainingDebt).build();
+
+            schedule.add(element);
+            remainingDebt = remainingDebt.subtract(debtPayment);
+            currentDate = currentDate.plusMonths(1);
+        }
+
+        return schedule;
+    }
+}

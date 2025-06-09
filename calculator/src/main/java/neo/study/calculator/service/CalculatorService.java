@@ -1,81 +1,86 @@
 package neo.study.calculator.service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import neo.study.calculator.dto.CreditDto;
 import neo.study.calculator.dto.LoanOfferDto;
 import neo.study.calculator.dto.LoanStatementRequestDto;
+import neo.study.calculator.dto.PaymentScheduleElementDto;
+import neo.study.calculator.dto.ScoringDataDto;
+import neo.study.calculator.enums.EmploymentStatus;
+import neo.study.calculator.utils.CreditCalculationHelper;
+import neo.study.calculator.utils.exception.LoanRejectionException;
 
 @Service
+@RequiredArgsConstructor
 public class CalculatorService {
-    private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
-    private static final BigDecimal PERCENT_DIVISOR = BigDecimal.valueOf(100);
-    private static final Integer ACCURACY_IN_CALCULATION = 10;
-    private static final Integer ACCURACY_IN_RESULT = 2;
 
-    @Value("${loan.base-rate}")
-    private double baseRate;
+    private final CreditCalculationHelper creditCalculationHelper;
 
-    @Value("${loan.insurance-discount}")
-    private double insuranceDiscount;
 
-    @Value("${loan.salary-client-discount}")
-    private double salaryClientDiscount;
+    public List<LoanOfferDto> getPrescoringResults(LoanStatementRequestDto loanStatementData) {
 
-    @Value("${loan.insurance-cost-percent}")
-    private double insuranceCostPercent;
-
-    public List<LoanOfferDto> getPrescoringResults(LoanStatementRequestDto request) {
         List<LoanOfferDto> offers = new ArrayList<>();
 
-        offers.add(createOffer(request, false, false));
-        offers.add(createOffer(request, false, true));
-        offers.add(createOffer(request, true, false));
-        offers.add(createOffer(request, true, true));
+        offers.add(creditCalculationHelper.createOffer(loanStatementData, false, false));
+        offers.add(creditCalculationHelper.createOffer(loanStatementData, false, true));
+        offers.add(creditCalculationHelper.createOffer(loanStatementData, true, false));
+        offers.add(creditCalculationHelper.createOffer(loanStatementData, true, true));
 
         return offers;
     }
 
-    private LoanOfferDto createOffer(LoanStatementRequestDto request, boolean isInsuranceEnabled,
-            boolean isSalaryClient) {
+    public CreditDto getScoringResult(ScoringDataDto scoringData) {
 
-        BigDecimal rate = BigDecimal.valueOf(baseRate);
-        BigDecimal insuranceCost = BigDecimal.ZERO;
+        checkLoanApproval(scoringData);
 
-        if (isInsuranceEnabled) {
-            insuranceCost =
-                    request.getAmount().multiply(BigDecimal.valueOf(insuranceCostPercent / 100));
-            rate = rate.subtract(BigDecimal.valueOf(insuranceDiscount));
-        }
+        BigDecimal rate = creditCalculationHelper.calculateRate(scoringData);
+        BigDecimal totalAmount = creditCalculationHelper
+                .calculateTotalAmount(scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
+        BigDecimal monthlyPayment = creditCalculationHelper.calculateMonthlyPayment(totalAmount,
+                rate, scoringData.getTerm());
+        BigDecimal psk = creditCalculationHelper.calculatePsk(monthlyPayment, scoringData.getTerm(),
+                totalAmount);
+        List<PaymentScheduleElementDto> paymentSchedule = creditCalculationHelper
+                .generatePaymentSchedule(totalAmount, rate, scoringData.getTerm());
 
-        if (isSalaryClient) {
-            rate = rate.subtract(BigDecimal.valueOf(salaryClientDiscount));
-        }
-
-        BigDecimal totalAmount = request.getAmount().add(insuranceCost);
-
-        return LoanOfferDto.builder().statementId(UUID.randomUUID())
-                .requestedAmount(request.getAmount()).totalAmount(totalAmount)
-                .term(request.getTerm())
-                .monthlyPayment(calculateMonthlyPayment(totalAmount, rate, request.getTerm()))
-                .rate(rate).isInsuranceEnabled(isInsuranceEnabled).isSalaryClient(isSalaryClient)
+        return CreditDto.builder().amount(totalAmount).term(scoringData.getTerm())
+                .monthlyPayment(monthlyPayment).rate(rate).psk(psk)
+                .isInsuranceEnabled(scoringData.getIsInsuranceEnabled())
+                .isSalaryClient(scoringData.getIsSalaryClient()).paymentSchedule(paymentSchedule)
                 .build();
     }
 
-    private BigDecimal calculateMonthlyPayment(BigDecimal totalAmount, BigDecimal rate,
-            Integer term) {
+    private void checkLoanApproval(ScoringDataDto scoringData) {
 
-        BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
-                ACCURACY_IN_CALCULATION, RoundingMode.UP);
-        BigDecimal subCoefficient = monthlyRate.add(BigDecimal.ONE).pow(term)
-                .setScale(ACCURACY_IN_CALCULATION, RoundingMode.UP);
-        BigDecimal coefficient = totalAmount.multiply((monthlyRate.multiply(subCoefficient)).divide(
-                subCoefficient.subtract(BigDecimal.ONE), ACCURACY_IN_CALCULATION, RoundingMode.UP));
+        if (scoringData.getEmployment().getEmploymentStatus() == EmploymentStatus.UNEMPLOYED) {
+            throw new LoanRejectionException("Loan rejected: Client is unemployed");
+        }
 
-        return coefficient.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+        BigDecimal maxAllowedAmount =
+                scoringData.getEmployment().getSalary().multiply(BigDecimal.valueOf(24));
+        if (scoringData.getAmount().compareTo(maxAllowedAmount) > 0) {
+            throw new LoanRejectionException("Loan rejected: Requested amount exceeds 24 salaries");
+        }
+
+        int age = Period.between(scoringData.getBirthdate(), LocalDate.now()).getYears();
+        if (age < 20 || age > 65) {
+            throw new LoanRejectionException("Loan rejected: Age must be between 20 and 65 years");
+        }
+
+        if (scoringData.getEmployment().getWorkExperienceTotal() < 18) {
+            throw new LoanRejectionException(
+                    "Loan rejected: Total work experience less than 18 months");
+        }
+
+        if (scoringData.getEmployment().getWorkExperienceCurrent() < 3) {
+            throw new LoanRejectionException(
+                    "Loan rejected: Current work experience less than 3 months");
+        }
     }
 }
