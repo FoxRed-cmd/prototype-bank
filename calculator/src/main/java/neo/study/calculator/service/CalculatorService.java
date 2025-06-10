@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import neo.study.calculator.dto.CreditDto;
 import neo.study.calculator.dto.LoanOfferDto;
 import neo.study.calculator.dto.LoanStatementRequestDto;
@@ -16,71 +17,119 @@ import neo.study.calculator.enums.EmploymentStatus;
 import neo.study.calculator.utils.CreditCalculationHelper;
 import neo.study.calculator.utils.exception.LoanRejectionException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CalculatorService {
 
-    private final CreditCalculationHelper creditCalculationHelper;
+        private final CreditCalculationHelper creditCalculationHelper;
 
 
-    public List<LoanOfferDto> getPrescoringResults(LoanStatementRequestDto loanStatementData) {
+        public List<LoanOfferDto> getPrescoringResults(LoanStatementRequestDto loanStatementData) {
+                log.info("Starting the pre-scoring process for the client: {} {}",
+                                loanStatementData.getFirstName(), loanStatementData.getLastName());
 
-        List<LoanOfferDto> offers = new ArrayList<>();
+                log.info("""
+                                Input data:
+                                Amount: {} RUB.
+                                Term: {} months.
+                                FullName: {} {} {}
+                                BirthDate: {}
+                                Email:": {}
+                                Passport series and number: {} {}
+                                """, loanStatementData.getAmount(), loanStatementData.getTerm(),
+                                loanStatementData.getFirstName(), loanStatementData.getLastName(),
+                                loanStatementData.getMiddleName(), loanStatementData.getBirthDate(),
+                                loanStatementData.getEmail(), loanStatementData.getPassportSeries(),
+                                loanStatementData.getPassportNumber());
 
-        offers.add(creditCalculationHelper.createOffer(loanStatementData, false, false));
-        offers.add(creditCalculationHelper.createOffer(loanStatementData, false, true));
-        offers.add(creditCalculationHelper.createOffer(loanStatementData, true, false));
-        offers.add(creditCalculationHelper.createOffer(loanStatementData, true, true));
+                List<LoanOfferDto> offers = new ArrayList<>();
 
-        return offers;
-    }
+                offers.add(creditCalculationHelper.createOffer(loanStatementData, false, false));
+                offers.add(creditCalculationHelper.createOffer(loanStatementData, false, true));
+                offers.add(creditCalculationHelper.createOffer(loanStatementData, true, false));
+                offers.add(creditCalculationHelper.createOffer(loanStatementData, true, true));
 
-    public CreditDto getScoringResult(ScoringDataDto scoringData) {
+                for (var offer : offers) {
+                        log.info("""
+                                        Created LoanOfferDto:
+                                        {
+                                          "statementId": "{}",
+                                          "requestedAmount": {},
+                                          "totalAmount": {},
+                                          "term": {},
+                                          "monthlyPayment": {},
+                                          "rate": {},
+                                          "isInsuranceEnabled": {},
+                                          "isSalaryClient": {}
+                                        }""", offer.getStatementId(), offer.getRequestedAmount(),
+                                        offer.getTotalAmount(), offer.getTerm(),
+                                        offer.getMonthlyPayment(), offer.getRate(),
+                                        offer.getIsInsuranceEnabled(), offer.getIsSalaryClient());
+                }
 
-        checkLoanApproval(scoringData);
-
-        BigDecimal rate = creditCalculationHelper.calculateRate(scoringData);
-        BigDecimal totalAmount = creditCalculationHelper
-                .calculateTotalAmount(scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
-        BigDecimal monthlyPayment = creditCalculationHelper.calculateMonthlyPayment(totalAmount,
-                rate, scoringData.getTerm());
-        BigDecimal psk = creditCalculationHelper.calculatePsk(monthlyPayment, scoringData.getTerm(),
-                totalAmount);
-        List<PaymentScheduleElementDto> paymentSchedule = creditCalculationHelper
-                .generatePaymentSchedule(totalAmount, rate, scoringData.getTerm());
-
-        return CreditDto.builder().amount(totalAmount).term(scoringData.getTerm())
-                .monthlyPayment(monthlyPayment).rate(rate).psk(psk)
-                .isInsuranceEnabled(scoringData.getIsInsuranceEnabled())
-                .isSalaryClient(scoringData.getIsSalaryClient()).paymentSchedule(paymentSchedule)
-                .build();
-    }
-
-    private void checkLoanApproval(ScoringDataDto scoringData) {
-
-        if (scoringData.getEmployment().getEmploymentStatus() == EmploymentStatus.UNEMPLOYED) {
-            throw new LoanRejectionException("Loan rejected: Client is unemployed");
+                return offers;
         }
 
-        BigDecimal maxAllowedAmount =
-                scoringData.getEmployment().getSalary().multiply(BigDecimal.valueOf(24));
-        if (scoringData.getAmount().compareTo(maxAllowedAmount) > 0) {
-            throw new LoanRejectionException("Loan rejected: Requested amount exceeds 24 salaries");
+        public CreditDto getScoringResult(ScoringDataDto scoringData) {
+                log.info("Start scoring result calculation for scoringData: {}", scoringData);
+
+                checkLoanApproval(scoringData);
+                log.info("Loan approval check passed");
+
+                BigDecimal rate = creditCalculationHelper.calculateRate(scoringData);
+
+                BigDecimal totalAmount = creditCalculationHelper.calculateTotalAmount(
+                                scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
+
+                BigDecimal monthlyPayment = creditCalculationHelper
+                                .calculateMonthlyPayment(totalAmount, rate, scoringData.getTerm());
+
+                BigDecimal psk = creditCalculationHelper.calculatePsk(monthlyPayment,
+                                scoringData.getTerm(), totalAmount);
+                List<PaymentScheduleElementDto> paymentSchedule = creditCalculationHelper
+                                .generatePaymentSchedule(totalAmount, rate, scoringData.getTerm());
+
+                CreditDto creditDto = CreditDto.builder().amount(totalAmount)
+                                .term(scoringData.getTerm()).monthlyPayment(monthlyPayment)
+                                .rate(rate).psk(psk)
+                                .isInsuranceEnabled(scoringData.getIsInsuranceEnabled())
+                                .isSalaryClient(scoringData.getIsSalaryClient())
+                                .paymentSchedule(paymentSchedule).build();
+
+                log.debug("Scoring result calculated successfully: {}", creditDto);
+
+                return creditDto;
         }
 
-        int age = Period.between(scoringData.getBirthdate(), LocalDate.now()).getYears();
-        if (age < 20 || age > 65) {
-            throw new LoanRejectionException("Loan rejected: Age must be between 20 and 65 years");
-        }
+        private void checkLoanApproval(ScoringDataDto scoringData) {
 
-        if (scoringData.getEmployment().getWorkExperienceTotal() < 18) {
-            throw new LoanRejectionException(
-                    "Loan rejected: Total work experience less than 18 months");
-        }
+                if (scoringData.getEmployment()
+                                .getEmploymentStatus() == EmploymentStatus.UNEMPLOYED) {
+                        throw new LoanRejectionException("Loan rejected: Client is unemployed");
+                }
 
-        if (scoringData.getEmployment().getWorkExperienceCurrent() < 3) {
-            throw new LoanRejectionException(
-                    "Loan rejected: Current work experience less than 3 months");
+                BigDecimal maxAllowedAmount = scoringData.getEmployment().getSalary()
+                                .multiply(BigDecimal.valueOf(24));
+                if (scoringData.getAmount().compareTo(maxAllowedAmount) > 0) {
+                        throw new LoanRejectionException(
+                                        "Loan rejected: Requested amount exceeds 24 salaries");
+                }
+
+                int age = Period.between(scoringData.getBirthdate(), LocalDate.now()).getYears();
+                if (age < 20 || age > 65) {
+                        throw new LoanRejectionException(
+                                        "Loan rejected: Age must be between 20 and 65 years");
+                }
+
+                if (scoringData.getEmployment().getWorkExperienceTotal() < 18) {
+                        throw new LoanRejectionException(
+                                        "Loan rejected: Total work experience less than 18 months");
+                }
+
+                if (scoringData.getEmployment().getWorkExperienceCurrent() < 3) {
+                        throw new LoanRejectionException(
+                                        "Loan rejected: Current work experience less than 3 months");
+                }
         }
-    }
 }

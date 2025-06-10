@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 import neo.study.calculator.dto.LoanOfferDto;
 import neo.study.calculator.dto.LoanStatementRequestDto;
 import neo.study.calculator.dto.PaymentScheduleElementDto;
 import neo.study.calculator.dto.ScoringDataDto;
 import neo.study.calculator.enums.Gender;
 
+@Slf4j
 @Component
 public class CreditCalculationHelper {
     private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
@@ -55,9 +57,12 @@ public class CreditCalculationHelper {
 
         BigDecimal rate = BigDecimal.valueOf(baseRate);
 
+
         rate = calculateRate(isInsuranceEnabled, isSalaryClient);
+        log.info("Possible rate: {}", rate);
 
         BigDecimal totalAmount = calculateTotalAmount(isInsuranceEnabled, request.getAmount());
+        log.info("Total amount: {}", totalAmount);
 
         return LoanOfferDto.builder().statementId(UUID.randomUUID())
                 .requestedAmount(request.getAmount()).totalAmount(totalAmount)
@@ -78,14 +83,24 @@ public class CreditCalculationHelper {
     public BigDecimal calculateMonthlyPayment(BigDecimal totalAmount, BigDecimal rate,
             Integer term) {
 
+        log.info("Calculating monthly payment: totalAmount={}, rate={}, term={}", totalAmount, rate,
+                term);
+
         BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
                 ACCURACY_IN_CALCULATION, RoundingMode.UP);
+        log.info("Monthly interest rate: {}", monthlyRate);
+
         BigDecimal subCoefficient = monthlyRate.add(BigDecimal.ONE).pow(term)
                 .setScale(ACCURACY_IN_CALCULATION, RoundingMode.UP);
+        log.info("Sub coefficient: {}", subCoefficient);
+
         BigDecimal coefficient = totalAmount.multiply((monthlyRate.multiply(subCoefficient)).divide(
                 subCoefficient.subtract(BigDecimal.ONE), ACCURACY_IN_CALCULATION, RoundingMode.UP));
+        BigDecimal result = coefficient.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
 
-        return coefficient.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+        log.info("Monthly payment result: {}", result);
+
+        return result;
     }
 
     /*
@@ -94,16 +109,22 @@ public class CreditCalculationHelper {
 
     public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
 
+        log.info("Calculating base rate: baseRate={}, isInsuranceEnabled={}, isSalaryClient={}",
+                baseRate, isInsuranceEnabled, isSalaryClient);
+
         BigDecimal rate = BigDecimal.valueOf(baseRate);
 
         if (isInsuranceEnabled) {
             rate = rate.subtract(BigDecimal.valueOf(insuranceDiscount));
+            log.info("Applied insurance discount: {}", insuranceDiscount);
         }
 
         if (isSalaryClient) {
             rate = rate.subtract(BigDecimal.valueOf(salaryClientDiscount));
+            log.info("Applied salary client discount: {}", salaryClientDiscount);
         }
 
+        log.info("Final rate after basic discounts: {}", rate);
         return rate;
     }
 
@@ -112,44 +133,82 @@ public class CreditCalculationHelper {
      */
 
     public BigDecimal calculateRate(ScoringDataDto scoringData) {
+        log.info("Calculating full rate for scoringData={}", scoringData);
         BigDecimal rate =
                 calculateRate(scoringData.getIsInsuranceEnabled(), scoringData.getIsSalaryClient());
+        log.info("Base rate after initial discounts: {}", rate);
 
         rate = switch (scoringData.getEmployment().getEmploymentStatus()) {
-            case SELF_EMPLOYED -> rate.add(INCREASE_FOR_SELF_EMPLOYED);
-            case BUSINESS_OWNER -> rate.add(INCREASE_FOR_BUSINESS_OWNER);
-            case EMPLOYED -> rate.add(INCREASE_FOR_EMPLOYED);
+            case SELF_EMPLOYED -> {
+                log.info("Employment status: SELF_EMPLOYED, applying increase: {}",
+                        INCREASE_FOR_SELF_EMPLOYED);
+                yield rate.add(INCREASE_FOR_SELF_EMPLOYED);
+            }
+            case BUSINESS_OWNER -> {
+                log.info("Employment status: BUSINESS_OWNER, applying increase: {}",
+                        INCREASE_FOR_BUSINESS_OWNER);
+                yield rate.add(INCREASE_FOR_BUSINESS_OWNER);
+            }
+            case EMPLOYED -> {
+                log.info("Employment status: EMPLOYED, applying increase: {}",
+                        INCREASE_FOR_EMPLOYED);
+                yield rate.add(INCREASE_FOR_EMPLOYED);
+            }
             default -> rate;
         };
 
         rate = switch (scoringData.getEmployment().getPosition()) {
-            case MIDDLE_MANAGER -> rate.subtract(DECREASE_MIDDLE_MANAGER);
-            case TOP_MANAGER -> rate.subtract(DECREASE_FOR_TOP_MANAGER);
+            case MIDDLE_MANAGER -> {
+                log.info("Position: MIDDLE_MANAGER, applying decrease: {}",
+                        DECREASE_MIDDLE_MANAGER);
+                yield rate.subtract(DECREASE_MIDDLE_MANAGER);
+            }
+            case TOP_MANAGER -> {
+                log.info("Position: TOP_MANAGER, applying decrease: {}", DECREASE_FOR_TOP_MANAGER);
+                yield rate.subtract(DECREASE_FOR_TOP_MANAGER);
+            }
             default -> rate;
         };
 
         rate = switch (scoringData.getMaritalStatus()) {
-            case MARRIED -> rate.subtract(DECREASE_FOR_MARRIED);
-            case DIVORCED -> rate.add(INCREASE_FOR_DIVORCED);
+            case MARRIED -> {
+                log.info("Marital status: MARRIED, applying decrease: {}", DECREASE_FOR_MARRIED);
+                yield rate.subtract(DECREASE_FOR_MARRIED);
+            }
+            case DIVORCED -> {
+                log.info("Marital status: DIVORCED, applying increase: {}", INCREASE_FOR_DIVORCED);
+                yield rate.add(INCREASE_FOR_DIVORCED);
+            }
             default -> rate;
         };
 
         int age = Period.between(scoringData.getBirthdate(), LocalDate.now()).getYears();
+        log.info("Client age: {}", age);
 
-        if (scoringData.getGender() == Gender.FEMALE
-                && (age >= MIN_AGE_FOR_FEMALE && age <= MAX_AGE_FOR_FEMALE)) {
+        if (scoringData.getGender() == Gender.FEMALE && age >= MIN_AGE_FOR_FEMALE
+                && age <= MAX_AGE_FOR_FEMALE) {
+            log.info("Gender: FEMALE within range, applying decrease: {}", DECREASE_FOR_FEMALE);
             rate = rate.subtract(DECREASE_FOR_FEMALE);
-        } else if (scoringData.getGender() == Gender.MALE
-                && (age >= MIN_AGE_FOR_MALE && age <= MAX_AGE_FOR_MALE)) {
+        } else if (scoringData.getGender() == Gender.MALE && age >= MIN_AGE_FOR_MALE
+                && age <= MAX_AGE_FOR_MALE) {
+            log.info("Gender: MALE within range, applying decrease: {}", DECREASE_FOR_MALE);
             rate = rate.subtract(DECREASE_FOR_MALE);
         }
 
-        return rate.max(BigDecimal.valueOf(5.0));
+        BigDecimal finalRate = rate.max(BigDecimal.valueOf(5.0));
+        log.info("Final calculated rate: {}", finalRate);
+        return finalRate;
     }
 
     public BigDecimal calculateTotalAmount(boolean isInsuranceEnabled, BigDecimal amount) {
+        log.info("Calculating total amount: isInsuranceEnabled={}, amount={}", isInsuranceEnabled,
+                amount);
+
         BigDecimal insuranceCost = calculateInsuranceCost(isInsuranceEnabled, amount);
-        return amount.add(insuranceCost);
+        BigDecimal total = amount.add(insuranceCost);
+
+        log.info("Insurance cost: {}, Total amount: {}", insuranceCost, total);
+        return total;
     }
 
     /*
@@ -161,11 +220,17 @@ public class CreditCalculationHelper {
      */
     public BigDecimal calculateInsuranceCost(boolean isInsuranceEnabled, BigDecimal amount) {
 
+        log.info("Calculating insurance cost: isInsuranceEnabled={}, amount={}", isInsuranceEnabled,
+                amount);
+
         if (isInsuranceEnabled) {
-            return amount.multiply(
+            BigDecimal cost = amount.multiply(
                     BigDecimal.valueOf(insuranceCostPercent / PERCENT_DIVISOR.intValue()));
+            log.info("Insurance cost calculated: {}", cost);
+            return cost;
         }
 
+        log.info("Insurance is not enabled, cost is 0");
         return BigDecimal.ZERO;
     }
 
@@ -179,16 +244,20 @@ public class CreditCalculationHelper {
      */
     public BigDecimal calculatePsk(BigDecimal monthlyPayment, Integer term,
             BigDecimal totalAmount) {
+        log.info("Calculating PSK: monthlyPayment={}, term={}, totalAmount={}", monthlyPayment,
+                term, totalAmount);
         BigDecimal totalPayments = monthlyPayment.multiply(BigDecimal.valueOf(term));
+        log.info("Total payments: {}", totalPayments);
 
-        // ПСК =
         BigDecimal psk = totalPayments.subtract(totalAmount)
                 .divide(totalAmount, ACCURACY_IN_CALCULATION, RoundingMode.UP)
                 .multiply(MONTHS_IN_YEAR)
                 .divide(BigDecimal.valueOf(term), ACCURACY_IN_CALCULATION, RoundingMode.UP)
                 .multiply(PERCENT_DIVISOR);
 
-        return psk.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+        BigDecimal result = psk.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+        log.info("PSK result: {}", result);
+        return result;
     }
 
     /*
@@ -214,6 +283,8 @@ public class CreditCalculationHelper {
     public List<PaymentScheduleElementDto> generatePaymentSchedule(BigDecimal totalAmount,
             BigDecimal rate, Integer term) {
 
+        log.info("Generating payment schedule: totalAmount={}, rate={}, term={}", totalAmount, rate,
+                term);
         List<PaymentScheduleElementDto> schedule = new ArrayList<>();
         BigDecimal remainingDebt = totalAmount;
         BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
@@ -230,11 +301,14 @@ public class CreditCalculationHelper {
                     .date(currentDate).totalPayment(monthlyPayment).interestPayment(interestPayment)
                     .debtPayment(debtPayment).remainingDebt(remainingDebt).build();
 
+            log.info("Schedule element {}: {}", i, element);
+
             schedule.add(element);
             remainingDebt = remainingDebt.subtract(debtPayment);
             currentDate = currentDate.plusMonths(1);
         }
 
+        log.info("Payment schedule generation complete with {} elements", schedule.size());
         return schedule;
     }
 }

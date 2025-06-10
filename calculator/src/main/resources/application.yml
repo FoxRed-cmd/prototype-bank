@@ -6,3 +6,6 @@ loan:
     insurance-discount: 3.0
     salary-client-discount: 1.0
     insurance-cost-percent: 5.0
+logging:
+    pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
