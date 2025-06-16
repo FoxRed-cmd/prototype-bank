@@ -27,10 +27,10 @@ public class CreditCalculationHelperTest {
 
     @BeforeEach
     void init() {
-        ReflectionTestUtils.setField(helper, "baseRate", 15.0);
-        ReflectionTestUtils.setField(helper, "insuranceDiscount", 3.0);
-        ReflectionTestUtils.setField(helper, "salaryClientDiscount", 1.0);
-        ReflectionTestUtils.setField(helper, "insuranceCostPercent", 5.0);
+        ReflectionTestUtils.setField(helper, "baseRate", "15.0");
+        ReflectionTestUtils.setField(helper, "insuranceDiscount", "3.0");
+        ReflectionTestUtils.setField(helper, "salaryClientDiscount", "1.0");
+        ReflectionTestUtils.setField(helper, "insuranceCostPercent", "5.0");
     }
 
     @Test

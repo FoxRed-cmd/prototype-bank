@@ -29,19 +29,7 @@ public class CalculatorService {
                 log.info("Starting the pre-scoring process for the client: {} {}",
                                 loanStatementData.getFirstName(), loanStatementData.getLastName());
 
-                log.info("""
-                                Input data:
-                                Amount: {} RUB.
-                                Term: {} months.
-                                FullName: {} {} {}
-                                BirthDate: {}
-                                Email:": {}
-                                Passport series and number: {} {}
-                                """, loanStatementData.getAmount(), loanStatementData.getTerm(),
-                                loanStatementData.getFirstName(), loanStatementData.getLastName(),
-                                loanStatementData.getMiddleName(), loanStatementData.getBirthDate(),
-                                loanStatementData.getEmail(), loanStatementData.getPassportSeries(),
-                                loanStatementData.getPassportNumber());
+                log.info("Input data: {}", loanStatementData);
 
                 List<LoanOfferDto> offers = new ArrayList<>();
 
@@ -50,23 +38,7 @@ public class CalculatorService {
                 offers.add(creditCalculationHelper.createOffer(loanStatementData, true, false));
                 offers.add(creditCalculationHelper.createOffer(loanStatementData, true, true));
 
-                for (var offer : offers) {
-                        log.info("""
-                                        Created LoanOfferDto:
-                                        {
-                                          "statementId": "{}",
-                                          "requestedAmount": {},
-                                          "totalAmount": {},
-                                          "term": {},
-                                          "monthlyPayment": {},
-                                          "rate": {},
-                                          "isInsuranceEnabled": {},
-                                          "isSalaryClient": {}
-                                        }""", offer.getStatementId(), offer.getRequestedAmount(),
-                                        offer.getTotalAmount(), offer.getTerm(),
-                                        offer.getMonthlyPayment(), offer.getRate(),
-                                        offer.getIsInsuranceEnabled(), offer.getIsSalaryClient());
-                }
+                offers.stream().forEach(offer -> log.info("Offer result: {}", offer));
 
                 return offers;
         }
@@ -78,17 +50,22 @@ public class CalculatorService {
                 log.info("Loan approval check passed");
 
                 BigDecimal rate = creditCalculationHelper.calculateRate(scoringData);
+                log.info("Rate calculated successfully: {}", rate);
 
                 BigDecimal totalAmount = creditCalculationHelper.calculateTotalAmount(
                                 scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
+                log.info("Total amount calculated successfully: {}", totalAmount);
 
                 BigDecimal monthlyPayment = creditCalculationHelper
                                 .calculateMonthlyPayment(totalAmount, rate, scoringData.getTerm());
+                log.info("Monthly payment calculated successfully: {}", monthlyPayment);
 
                 BigDecimal psk = creditCalculationHelper.calculatePsk(monthlyPayment,
                                 scoringData.getTerm(), totalAmount);
                 List<PaymentScheduleElementDto> paymentSchedule = creditCalculationHelper
                                 .generatePaymentSchedule(totalAmount, rate, scoringData.getTerm());
+                log.info("Payment schedule generated successfully");
+                paymentSchedule.stream().forEach(ps -> log.info("Payment schedule: {}", ps));
 
                 CreditDto creditDto = CreditDto.builder().amount(totalAmount)
                                 .term(scoringData.getTerm()).monthlyPayment(monthlyPayment)
@@ -102,6 +79,15 @@ public class CalculatorService {
                 return creditDto;
         }
 
+        /*
+         * Рабочий статус: Безработный → отказ
+         *
+         * Сумма займа больше, чем 24 зарплат → отказ
+         *
+         * Возраст менее 20 или более 65 лет → отказ
+         *
+         * Стаж работы: Общий стаж менее 18 месяцев → отказ; Текущий стаж менее 3 месяцев → отказ
+         */
         private void checkLoanApproval(ScoringDataDto scoringData) {
 
                 if (scoringData.getEmployment()

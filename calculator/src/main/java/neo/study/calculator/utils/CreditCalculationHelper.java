@@ -41,23 +41,24 @@ public class CreditCalculationHelper {
     private static final Integer ACCURACY_IN_RESULT = 2;
 
     @Value("${loan.base-rate}")
-    private double baseRate;
+    private String baseRate;
 
     @Value("${loan.insurance-discount}")
-    private double insuranceDiscount;
+    private String insuranceDiscount;
 
     @Value("${loan.salary-client-discount}")
-    private double salaryClientDiscount;
+    private String salaryClientDiscount;
 
     @Value("${loan.insurance-cost-percent}")
-    private double insuranceCostPercent;
+    private String insuranceCostPercent;
 
     public LoanOfferDto createOffer(LoanStatementRequestDto request, boolean isInsuranceEnabled,
             boolean isSalaryClient) {
+        log.info(
+                "Starting offer creation with input values: {}, isInsuranceEnabled={}, isSalaryClient={}",
+                request, isInsuranceEnabled, isSalaryClient);
 
-        BigDecimal rate = BigDecimal.valueOf(baseRate);
-
-
+        BigDecimal rate = new BigDecimal(baseRate);
         rate = calculateRate(isInsuranceEnabled, isSalaryClient);
         log.info("Possible rate: {}", rate);
 
@@ -75,16 +76,18 @@ public class CreditCalculationHelper {
     /*
      * Расчет ежемесячного платежа
      *
-     * totalAmount * (monthlyRate * (1 + monthlyRate)^term) / ((1 + monthlyRate)^term - 1)
+     * monthlyPayment = totalAmount * (monthlyRate * subCoefficient) / (subCoefficient - 1)
+     * subCoefficient = (1 + monthlyRate)^term
      *
-     * Где: totalAmount - сумма кредита, monthlyRate - месячная процентная ставка (rate / 12 * 100)
-     * rate - количество месяцев (срок кредитования).
+     * Где: monthlyPayment - ежемесячный платеж, totalAmount - сумма кредита, monthlyRate -
+     * месячная процентная ставка (rate / 12 * 100), subCoefficient - переменная для хранения
+     * промежуточного результата, rate - количество месяцев (срок кредитования).
      */
     public BigDecimal calculateMonthlyPayment(BigDecimal totalAmount, BigDecimal rate,
             Integer term) {
 
-        log.info("Calculating monthly payment: totalAmount={}, rate={}, term={}", totalAmount, rate,
-                term);
+        log.info("Start calculating monthly payment: totalAmount={}, rate={}, term={}", totalAmount,
+                rate, term);
 
         BigDecimal monthlyRate = rate.divide(MONTHS_IN_YEAR.multiply(PERCENT_DIVISOR),
                 ACCURACY_IN_CALCULATION, RoundingMode.UP);
@@ -94,17 +97,21 @@ public class CreditCalculationHelper {
                 .setScale(ACCURACY_IN_CALCULATION, RoundingMode.UP);
         log.info("Sub coefficient: {}", subCoefficient);
 
-        BigDecimal coefficient = totalAmount.multiply((monthlyRate.multiply(subCoefficient)).divide(
-                subCoefficient.subtract(BigDecimal.ONE), ACCURACY_IN_CALCULATION, RoundingMode.UP));
-        BigDecimal result = coefficient.setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
+        BigDecimal monthlyPayment = (totalAmount.multiply((monthlyRate.multiply(subCoefficient))
+                .divide(subCoefficient.subtract(BigDecimal.ONE), ACCURACY_IN_CALCULATION,
+                        RoundingMode.UP))).setScale(ACCURACY_IN_RESULT, RoundingMode.UP);
 
-        log.info("Monthly payment result: {}", result);
+        log.info("Monthly payment result: {}", monthlyPayment);
 
-        return result;
+        return monthlyPayment;
     }
 
     /*
      * Расчет ставки с учетом страховки и ставки для зарплатных клиентов
+     *
+     * Если страховка включена, то уменьшаем ставку на 3%
+     *
+     * Если клиент зарплатный, то уменьшаем ставку на 1%
      */
 
     public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
@@ -112,15 +119,15 @@ public class CreditCalculationHelper {
         log.info("Calculating base rate: baseRate={}, isInsuranceEnabled={}, isSalaryClient={}",
                 baseRate, isInsuranceEnabled, isSalaryClient);
 
-        BigDecimal rate = BigDecimal.valueOf(baseRate);
+        BigDecimal rate = new BigDecimal(baseRate);
 
         if (isInsuranceEnabled) {
-            rate = rate.subtract(BigDecimal.valueOf(insuranceDiscount));
+            rate = rate.subtract(new BigDecimal(insuranceDiscount));
             log.info("Applied insurance discount: {}", insuranceDiscount);
         }
 
         if (isSalaryClient) {
-            rate = rate.subtract(BigDecimal.valueOf(salaryClientDiscount));
+            rate = rate.subtract(new BigDecimal(salaryClientDiscount));
             log.info("Applied salary client discount: {}", salaryClientDiscount);
         }
 
@@ -130,6 +137,20 @@ public class CreditCalculationHelper {
 
     /*
      * Расчет ставки с учетом всех правил скоринга
+     *
+     * Рабочий статус: Самозанятый → ставка увеличивается на 2; Владелец бизнеса → ставка
+     * увеличивается на 1; Работающий → ставка увеличивается на 0.5
+     *
+     * Позиция на работе: Менеджер среднего звена → ставка уменьшается на 2; Топ-менеджер → ставка
+     * уменьшается на 3
+     *
+     * Семейное положение: Замужем/женат → ставка уменьшается на 3; Разведен → ставка увеличивается
+     * на 1
+     *
+     * Пол: Женщина, возраст от 32 до 60 лет → ставка уменьшается на 3; Мужчина, возраст от 30 до 55
+     * лет → ставка уменьшается на 3;
+     *
+     * Ставка не может быть меньше 5%
      */
 
     public BigDecimal calculateRate(ScoringDataDto scoringData) {
@@ -212,35 +233,37 @@ public class CreditCalculationHelper {
     }
 
     /*
-     * Расчет стоимости страховки
+     * Расчет стоимости страхования
      *
-     * amount * (insuranceCostPercent / 100)
+     * insuranceCost = amount * (insuranceCostPercent / 100)
      *
-     * Где: amount - сумма кредита, insuranceCostPercent - процент стоимости страховки
+     * Где: insuranceCost - стоимость страхования, amount - сумма кредита, insuranceCostPercent -
+     * процент стоимости страхования
+     *
      */
     public BigDecimal calculateInsuranceCost(boolean isInsuranceEnabled, BigDecimal amount) {
 
         log.info("Calculating insurance cost: isInsuranceEnabled={}, amount={}", isInsuranceEnabled,
                 amount);
 
-        if (isInsuranceEnabled) {
-            BigDecimal cost = amount.multiply(
-                    BigDecimal.valueOf(insuranceCostPercent / PERCENT_DIVISOR.intValue()));
-            log.info("Insurance cost calculated: {}", cost);
-            return cost;
+        if (!isInsuranceEnabled) {
+            log.info("Insurance is not enabled, cost is 0");
+            return BigDecimal.ZERO;
         }
 
-        log.info("Insurance is not enabled, cost is 0");
-        return BigDecimal.ZERO;
+        BigDecimal insuranceCost = amount.multiply(BigDecimal
+                .valueOf(Double.parseDouble(insuranceCostPercent) / PERCENT_DIVISOR.intValue()));
+        log.info("Insurance cost calculated: {}", insuranceCost);
+        return insuranceCost;
     }
 
     /*
      * Расчет ПСК
      *
-     * (totalPayments - totalAmount) / totalAmount * (12 / term) * 100%
+     * psk = (totalPayments - totalAmount) / totalAmount * (12 / term) * 100%
      *
-     * Где: totalPayments - общая сумма платежей, totalAmount - сумма кредита, term - количество
-     * месяцев
+     * Где: psk - полная стоимость кредита за год в процентах, totalPayments - общая сумма
+     * платежей, totalAmount - сумма кредита, term - количество месяцев
      */
     public BigDecimal calculatePsk(BigDecimal monthlyPayment, Integer term,
             BigDecimal totalAmount) {
