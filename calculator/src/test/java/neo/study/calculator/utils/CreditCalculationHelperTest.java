@@ -100,7 +100,7 @@ public class CreditCalculationHelperTest {
                 .employerINN("1234567890").salary(new BigDecimal("50000")).workExperienceCurrent(12)
                 .workExperienceTotal(36).build();
 
-        return ScoringDataDto.builder().firstName("Anna").lastName("Ivanova").gender(Gender.FEMALE)
+        return ScoringDataDto.builder().firstName("Анна").lastName("Ивановна").gender(Gender.FEMALE)
                 .birthdate(LocalDate.now().minusYears(35)).maritalStatus(MaritalStatus.MARRIED)
                 .employment(employment).accountNumber("40817810099910004312").passportSeries("1234")
                 .passportNumber("567890").passportIssueBranch("OVD")

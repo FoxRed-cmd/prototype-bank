@@ -57,12 +57,15 @@ public class DtoValidator {
     /*
      * Все поля не должны быть null или пустыми
      *
-     * Сумма кредита - действительно число, большее или равное 20000 Имя, Фамилия - от 2 до 30
-     * латинских букв. Отчество, при наличии - от 2 до 30 латинских букв.
+     * Сумма кредита - действительно число, большее или равное 20000 и меньшее или равное 5000000
      *
-     * Срок кредита - целое число, большее или равное 6 месяцам.
+     * Имя, Фамилия - от 2 до 30 букв (кириллица). Отчество, при наличии - от 2 до 30 букв
+     * (кириллица).
      *
-     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня.
+     * Срок кредита - целое число, большее или равное 6 месяцам, но не более 120 (10 лет).
+     *
+     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня, на момент
+     * окончания кредита не старше 65 лет.
      *
      * Email адрес - строка, подходящая под паттерн
      * ^[a-z0-9A-Z_!#$%&'*+/=?`{|}~^.-]+@[a-z0-9A-Z.-]+$
@@ -77,29 +80,33 @@ public class DtoValidator {
             errors.add("Amount cannot be null");
         } else if (dto.getAmount().compareTo(new BigDecimal("20000")) < 0) {
             errors.add("Loan amount must be at least 20000");
+        } else if (dto.getAmount().compareTo(new BigDecimal("5000000")) > 0) {
+            errors.add("Loan amount cannot exceed 5000000");
         }
 
         if (dto.getTerm() == null) {
             errors.add("Term cannot be null");
         } else if (dto.getTerm() < 6) {
             errors.add("Loan term must be at least 6 months");
+        } else if (dto.getTerm() > 120) {
+            errors.add("Loan term cannot exceed 120 months");
         }
 
         if (dto.getFirstName() == null || dto.getFirstName().trim().isEmpty()) {
             errors.add("First name is required");
-        } else if (!dto.getFirstName().matches("^[a-zA-Z]{2,30}$")) {
-            errors.add("First name must be 2-30 Latin letters");
+        } else if (!dto.getFirstName().matches("^[а-яА-ЯёЁ]{2,30}$")) {
+            errors.add("First name must be 2-30 Cyrillic letters");
         }
 
         if (dto.getLastName() == null || dto.getLastName().trim().isEmpty()) {
             errors.add("Last name is required");
-        } else if (!dto.getLastName().matches("^[a-zA-Z]{2,30}$")) {
-            errors.add("Last name must be 2-30 Latin letters");
+        } else if (!dto.getLastName().matches("^[а-яА-ЯёЁ]{2,30}$")) {
+            errors.add("Last name must be 2-30 Cyrillic letters");
         }
 
         if (dto.getMiddleName() != null && !dto.getMiddleName().isEmpty()
-                && !dto.getMiddleName().matches("^[a-zA-Z]{2,30}$")) {
-            errors.add("Middle name must be 2-30 Latin letters if provided");
+                && !dto.getMiddleName().matches("^[а-яА-ЯёЁ]{2,30}$")) {
+            errors.add("Middle name must be 2-30 Cyrillic letters if provided");
         }
 
         if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
@@ -114,11 +121,15 @@ public class DtoValidator {
             if (!dto.getBirthDate().isBefore(LocalDate.now())) {
                 errors.add("Birthdate must be in the past");
             }
-            // Проверка возраста (не младше 18)
+
             LocalDate today = LocalDate.now();
             Period age = Period.between(dto.getBirthDate(), today);
             if (age.getYears() < 18) {
                 errors.add("You must be at least 18 years old");
+            }
+
+            if (age.getYears() + (dto.getTerm() / 12) > 65) {
+                errors.add("Age at the end of the loan must not be older than 65 years");
             }
         }
 
@@ -140,12 +151,15 @@ public class DtoValidator {
     /*
      * Все поля не должны быть null или пустыми
      *
-     * Сумма кредита - действительно число, большее или равное 20000 Имя, Фамилия - от 2 до 30
-     * латинских букв. Отчество, при наличии - от 2 до 30 латинских букв.
+     * Сумма кредита - действительно число, большее или равное 20000 и меньшее или равное 5000000
      *
-     * Срок кредита - целое число, большее или равное 6 месяцам.
+     * Имя, Фамилия - от 2 до 30 букв (кириллица). Отчество, при наличии - от 2 до 30 букв
+     * (кириллица).
      *
-     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня.
+     * Срок кредита - целое число, большее или равное 6 месяцам, но не более 120 (10 лет).
+     *
+     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня, на момент
+     * окончания кредита не старше 65 лет.
      *
      * Серия паспорта - 4 цифры, номер паспорта - 6 цифр.
      *

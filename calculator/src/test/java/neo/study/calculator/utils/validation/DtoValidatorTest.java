@@ -46,9 +46,9 @@ public class DtoValidatorTest {
         ScoringDataDto dto = new ScoringDataDto();
         dto.setAmount(new BigDecimal("50000"));
         dto.setTerm(12);
-        dto.setFirstName("John");
-        dto.setLastName("Doe");
-        dto.setMiddleName("Alex");
+        dto.setFirstName("Джон");
+        dto.setLastName("Доу");
+        dto.setMiddleName("Алекс");
         dto.setGender(Gender.MALE);
         dto.setBirthdate(LocalDate.of(1990, 1, 1));
         dto.setPassportSeries("1234");

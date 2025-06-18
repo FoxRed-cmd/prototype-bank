@@ -144,8 +144,8 @@ public class CreditCalculationHelper {
      * Позиция на работе: Менеджер среднего звена → ставка уменьшается на 2; Топ-менеджер → ставка
      * уменьшается на 3
      *
-     * Семейное положение: Замужем/женат → ставка уменьшается на 3; Разведен → ставка увеличивается
-     * на 1
+     * Семейное положение: Замужем/женат → ставка уменьшается на 3; Разведен, холост, овдовел →
+     * ставка увеличивается на 1
      *
      * Пол: Женщина, возраст от 32 до 60 лет → ставка уменьшается на 3; Мужчина, возраст от 30 до 55
      * лет → ставка уменьшается на 3;
@@ -196,7 +196,7 @@ public class CreditCalculationHelper {
                 log.info("Marital status: MARRIED, applying decrease: {}", DECREASE_FOR_MARRIED);
                 yield rate.subtract(DECREASE_FOR_MARRIED);
             }
-            case DIVORCED -> {
+            case DIVORCED, SINGLE, WIDOWED -> {
                 log.info("Marital status: DIVORCED, applying increase: {}", INCREASE_FOR_DIVORCED);
                 yield rate.add(INCREASE_FOR_DIVORCED);
             }
