@@ -16,6 +16,8 @@ import neo.study.calculator.dto.ScoringDataDto;
 import neo.study.calculator.enums.EmploymentStatus;
 import neo.study.calculator.utils.CreditCalculationHelper;
 import neo.study.calculator.utils.exception.LoanRejectionException;
+import neo.study.calculator.utils.exception.NotValidException;
+import neo.study.calculator.utils.validation.DtoValidator;
 
 @Slf4j
 @Service
@@ -24,8 +26,12 @@ public class CalculatorService {
 
         private final CreditCalculationHelper creditCalculationHelper;
 
-
         public List<LoanOfferDto> getPrescoringResults(LoanStatementRequestDto loanStatementData) {
+                var errors = DtoValidator.loanStatementRequestValidate(loanStatementData);
+                if (!errors.isEmpty()) {
+                        throw new NotValidException(errors, "Validation error");
+                }
+
                 log.info("Starting the pre-scoring process for the client: {} {}",
                                 loanStatementData.getFirstName(), loanStatementData.getLastName());
 
@@ -44,6 +50,10 @@ public class CalculatorService {
         }
 
         public CreditDto getScoringResult(ScoringDataDto scoringData) {
+                var errors = DtoValidator.scoringDataValidate(scoringData);
+                if (!errors.isEmpty()) {
+                        throw new NotValidException(errors, "Validation error");
+                }
                 log.info("Start scoring result calculation for scoringData: {}", scoringData);
 
                 checkLoanApproval(scoringData);
@@ -84,7 +94,7 @@ public class CalculatorService {
          *
          * Сумма займа больше, чем 24 зарплат → отказ
          *
-         * Возраст менее 20 или более 65 лет → отказ
+         * Возраст менее 20 или более 65 лет или на момент окончания кредита старше 65 лет → отказ
          *
          * Стаж работы: Общий стаж менее 18 месяцев → отказ; Текущий стаж менее 3 месяцев → отказ
          */
@@ -106,6 +116,11 @@ public class CalculatorService {
                 if (age < 20 || age > 65) {
                         throw new LoanRejectionException(
                                         "Loan rejected: Age must be between 20 and 65 years");
+                }
+
+                if (age + (scoringData.getTerm() / 12) > 65) {
+                        throw new LoanRejectionException(
+                                        "Age at the end of the loan must not be older than 65 years");
                 }
 
                 if (scoringData.getEmployment().getWorkExperienceTotal() < 18) {

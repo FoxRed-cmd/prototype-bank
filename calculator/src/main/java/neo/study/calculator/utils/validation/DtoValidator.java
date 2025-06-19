@@ -17,6 +17,8 @@ public class DtoValidator {
      *
      * Стаж должен быть положительным значением
      *
+     * ИНН сотрудника должен быть не менее 10 и не более 12 цифр (10 для организаций, 12 для физлиц)
+     *
      */
     public static List<String> employmentValidate(EmploymentDto dto) {
         List<String> errors = new ArrayList<>();
@@ -27,6 +29,9 @@ public class DtoValidator {
 
         if (dto.getEmployerINN() == null || dto.getEmployerINN().trim().isEmpty()) {
             errors.add("Employer INN is required");
+        } else if (!dto.getEmployerINN().matches("^\\d{10,12}$")) {
+            errors.add(
+                    "INN for the organization - a ten-digit digital code, for an individual - a twelve-digit digital code");
         }
 
         if (dto.getSalary() == null) {
@@ -64,8 +69,8 @@ public class DtoValidator {
      *
      * Срок кредита - целое число, большее или равное 6 месяцам, но не более 120 (10 лет).
      *
-     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня, на момент
-     * окончания кредита не старше 65 лет.
+     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня, но не старше 65
+     * на момент окончания кредита (проверяется при скоринге в методе checkLoanApproval).
      *
      * Email адрес - строка, подходящая под паттерн
      * ^[a-z0-9A-Z_!#$%&'*+/=?`{|}~^.-]+@[a-z0-9A-Z.-]+$
@@ -127,10 +132,6 @@ public class DtoValidator {
             if (age.getYears() < 18) {
                 errors.add("You must be at least 18 years old");
             }
-
-            if (age.getYears() + (dto.getTerm() / 12) > 65) {
-                errors.add("Age at the end of the loan must not be older than 65 years");
-            }
         }
 
         if (dto.getPassportSeries() == null || dto.getPassportSeries().trim().isEmpty()) {
@@ -151,30 +152,17 @@ public class DtoValidator {
     /*
      * Все поля не должны быть null или пустыми
      *
-     * Сумма кредита - действительно число, большее или равное 20000 и меньшее или равное 5000000
-     *
-     * Имя, Фамилия - от 2 до 30 букв (кириллица). Отчество, при наличии - от 2 до 30 букв
-     * (кириллица).
-     *
-     * Срок кредита - целое число, большее или равное 6 месяцам, но не более 120 (10 лет).
-     *
-     * Дата рождения - число в формате гггг-мм-дд, не позднее 18 лет с текущего дня, на момент
-     * окончания кредита не старше 65 лет.
-     *
-     * Серия паспорта - 4 цифры, номер паспорта - 6 цифр.
-     *
      * Поле "Кем выдан" паспорт - не более 200 символов
      *
      * Сумма иждивенца - положительное число
      *
      * Дата выдачи паспорта - не позднее текущего дня
+     *
+     * Номер счёта должен состоять из 20 цифр
      */
     public static List<String> scoringDataValidate(ScoringDataDto dto) {
-        List<String> errors = DtoValidator.loanStatementRequestValidate(LoanStatementRequestDto
-                .builder().amount(dto.getAmount()).term(dto.getTerm()).firstName(dto.getFirstName())
-                .lastName(dto.getLastName()).middleName(dto.getMiddleName()).email("test@mail.com")
-                .birthDate(dto.getBirthdate()).passportSeries(dto.getPassportSeries())
-                .passportNumber(dto.getPassportNumber()).build());
+        List<String> errors =
+                DtoValidator.loanStatementRequestValidate(new LoanStatementRequestDto(dto));
 
         if (dto.getGender() == null) {
             errors.add("Gender is required");
@@ -213,6 +201,8 @@ public class DtoValidator {
 
         if (dto.getAccountNumber() == null || dto.getAccountNumber().trim().isEmpty()) {
             errors.add("Account number is required");
+        } else if (!dto.getAccountNumber().matches("^\\d{20}$")) {
+            errors.add("Account number must be 20 digits");
         }
 
         if (dto.getIsInsuranceEnabled() == null) {

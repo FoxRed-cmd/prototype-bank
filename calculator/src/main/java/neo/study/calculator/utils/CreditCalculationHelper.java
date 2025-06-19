@@ -59,7 +59,7 @@ public class CreditCalculationHelper {
                 request, isInsuranceEnabled, isSalaryClient);
 
         BigDecimal rate = new BigDecimal(baseRate);
-        rate = calculateRate(isInsuranceEnabled, isSalaryClient);
+        rate = calculateRate(rate, isInsuranceEnabled, isSalaryClient);
         log.info("Possible rate: {}", rate);
 
         BigDecimal totalAmount = calculateTotalAmount(isInsuranceEnabled, request.getAmount());
@@ -114,12 +114,11 @@ public class CreditCalculationHelper {
      * Если клиент зарплатный, то уменьшаем ставку на 1%
      */
 
-    public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
+    public BigDecimal calculateRate(BigDecimal rate, boolean isInsuranceEnabled,
+            boolean isSalaryClient) {
 
         log.info("Calculating base rate: baseRate={}, isInsuranceEnabled={}, isSalaryClient={}",
-                baseRate, isInsuranceEnabled, isSalaryClient);
-
-        BigDecimal rate = new BigDecimal(baseRate);
+                rate, isInsuranceEnabled, isSalaryClient);
 
         if (isInsuranceEnabled) {
             rate = rate.subtract(new BigDecimal(insuranceDiscount));
@@ -155,8 +154,8 @@ public class CreditCalculationHelper {
 
     public BigDecimal calculateRate(ScoringDataDto scoringData) {
         log.info("Calculating full rate for scoringData={}", scoringData);
-        BigDecimal rate =
-                calculateRate(scoringData.getIsInsuranceEnabled(), scoringData.getIsSalaryClient());
+        BigDecimal rate = calculateRate(new BigDecimal(baseRate),
+                scoringData.getIsInsuranceEnabled(), scoringData.getIsSalaryClient());
         log.info("Base rate after initial discounts: {}", rate);
 
         rate = switch (scoringData.getEmployment().getEmploymentStatus()) {

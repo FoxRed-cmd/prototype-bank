@@ -21,4 +21,16 @@ public class LoanStatementRequestDto {
     private LocalDate birthDate;
     private String passportSeries;
     private String passportNumber;
+
+    public LoanStatementRequestDto(ScoringDataDto scoringData) {
+        this.amount = scoringData.getAmount();
+        this.term = scoringData.getTerm();
+        this.firstName = scoringData.getFirstName();
+        this.lastName = scoringData.getLastName();
+        this.middleName = scoringData.getMiddleName();
+        this.email = "trueEmail@mail.com";
+        this.birthDate = scoringData.getBirthdate();
+        this.passportSeries = scoringData.getPassportSeries();
+        this.passportNumber = scoringData.getPassportNumber();
+    }
 }

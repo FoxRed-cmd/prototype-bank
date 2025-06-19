@@ -54,7 +54,7 @@ public class CreditCalculationHelperTest {
 
     @Test
     void testCalculateRate_withDiscounts() {
-        BigDecimal rate = helper.calculateRate(true, true);
+        BigDecimal rate = helper.calculateRate(new BigDecimal("15.0"), true, true);
         assertEquals(new BigDecimal("11.0"), rate); // 15 - 3 - 1
     }
 
