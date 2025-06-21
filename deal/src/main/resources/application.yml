@@ -1,0 +1,5 @@
+spring:
+    application:
+        name: deal
+server:
+    port: 8081
