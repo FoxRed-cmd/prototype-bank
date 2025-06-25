@@ -2,7 +2,11 @@ package neo.study.deal.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
+import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
+import neo.study.deal.service.DealService;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,12 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/deal")
+@RequiredArgsConstructor
 public class DealController {
+    private final DealService dealService;
 
     @PostMapping("/statement")
-    public ResponseEntity<String> statementProcessing(
+    public ResponseEntity<List<LoanOfferDto>> statementProcessing(
             @RequestBody LoanStatementRequestDto request) {
-        return ResponseEntity.ok(request.getFirstName());
+        return ResponseEntity.ok(dealService.statementProcessing(request));
     }
 
     @PostMapping("/offer/select")

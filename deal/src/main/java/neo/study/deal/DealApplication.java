@@ -9,5 +9,4 @@ public class DealApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DealApplication.class, args);
 	}
-
 }

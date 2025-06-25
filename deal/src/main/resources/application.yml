@@ -3,3 +3,8 @@ spring:
         name: deal
 server:
     port: 8081
+services:
+    calculator:
+        base-url: http://localhost:8080
+        offers-api: /calculator/offers
+        calc-api: /calculator/calc

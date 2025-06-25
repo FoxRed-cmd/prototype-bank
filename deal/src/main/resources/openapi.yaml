@@ -27,3 +27,24 @@ components:
                     type: string
                 passportNumber:
                     type: string
+        LoanOfferDto:
+            type: object
+            properties:
+                statementId:
+                    type: string
+                    format: uuid
+                requestedAmount:
+                    type: number
+                totalAmount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
