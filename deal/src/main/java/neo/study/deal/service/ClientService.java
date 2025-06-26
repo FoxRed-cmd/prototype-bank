@@ -1,7 +1,6 @@
 package neo.study.deal.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import neo.study.deal.dto.LoanStatementRequestDto;
 import neo.study.deal.entity.Client;
@@ -13,7 +12,9 @@ import neo.study.deal.repository.ClientRepository;
 public class ClientService {
     private final ClientRepository clientRepository;
 
-    @Transactional
+    /*
+     * Создание клиента и сохранение в базе данных
+     */
     public Client create(LoanStatementRequestDto requestDto) {
         var passport = Passport.builder().series(requestDto.getPassportSeries())
                 .number(requestDto.getPassportNumber()).build();

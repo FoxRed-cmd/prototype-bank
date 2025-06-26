@@ -1,11 +1,9 @@
 package neo.study.deal.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import neo.study.deal.dto.ApplicationStatus;
@@ -20,7 +18,9 @@ import neo.study.deal.repository.StatementRepository;
 public class StatementService {
     private final StatementRepository statementRepository;
 
-    @Transactional
+    /*
+     * Создание заявки со ссылкой на клиента в базе данных
+     */
     public Statement create(Client client) {
         var statement = Statement.builder().client(client).creationDate(LocalDate.now())
                 .status(ApplicationStatus.PREAPPROVAL).build();
@@ -30,7 +30,9 @@ public class StatementService {
         return statementRepository.save(statement);
     }
 
-    @Transactional
+    /*
+     * Обновление статуса заявки в базе данных
+     */
     public Statement updateStatus(Statement statement, ApplicationStatus status,
             ChangeType changeType) {
         statement.setStatus(status);
@@ -40,6 +42,9 @@ public class StatementService {
         return statementRepository.save(statement);
     }
 
+    /*
+     * Метод для добавления статуса в историю статусов заявки
+     */
     private void addStatusHistory(Statement statement, ApplicationStatus status,
             ChangeType changeType) {
         var history = new StatementStatusHistoryDto();
@@ -51,6 +56,9 @@ public class StatementService {
         statement.getStatusHistory().add(history);
     }
 
+    /*
+     * Метод для получения заявки из базы данных по id
+     */
     public Statement getById(UUID id) {
         return statementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Statement not found"));

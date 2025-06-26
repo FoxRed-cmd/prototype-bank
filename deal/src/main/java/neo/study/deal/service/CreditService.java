@@ -1,7 +1,6 @@
 package neo.study.deal.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import neo.study.deal.dto.CreditDto;
 import neo.study.deal.dto.CreditStatus;
@@ -13,7 +12,9 @@ import neo.study.deal.repository.CreditRepository;
 public class CreditService {
     private final CreditRepository creditRepository;
 
-    @Transactional
+    /*
+     * Создание кредита и сохранение в базе данных
+     */
     public Credit create(CreditDto creditDto) {
         var credit = Credit.builder().amount(creditDto.getAmount()).term(creditDto.getTerm())
                 .monthlyPayment(creditDto.getMonthlyPayment()).rate(creditDto.getRate())
