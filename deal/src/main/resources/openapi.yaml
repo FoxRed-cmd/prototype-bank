@@ -139,6 +139,49 @@ components:
                 changeType:
                     $ref: "#/components/schemas/ChangeType"
 
+        FinishRegistrationRequestDto:
+            type: object
+            properties:
+                gender:
+                    $ref: "#/components/schemas/Gender"
+                maritalStatus:
+                    $ref: "#/components/schemas/MaritalStatus"
+                dependentAmount:
+                    type: integer
+                    format: int32
+                passportIssueDate:
+                    type: string
+                    format: date
+                passportIssueBranch:
+                    type: string
+                employment:
+                    $ref: "#/components/schemas/EmploymentDto"
+                accountNumber:
+                    type: string
+
+        CreditDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                psk:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
+                paymentSchedule:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/PaymentScheduleElementDto"
+
         Gender:
             type: string
             enum: [MALE, FEMALE]

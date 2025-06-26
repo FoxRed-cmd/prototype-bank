@@ -1,13 +1,16 @@
 package neo.study.deal.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
+import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
 import neo.study.deal.service.DealService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -25,17 +28,14 @@ public class DealController {
     }
 
     @PostMapping("/offer/select")
-    public String selectOffer(@RequestBody String entity) {
-        // TODO: process POST request
-
-        return entity;
+    public void selectOffer(@RequestBody LoanOfferDto requestOffer) {
+        dealService.selectOffer(requestOffer);
     }
 
     @PostMapping("/calculate/{statementId}")
-    public String registrationComplete(@RequestBody String entity) {
-        // TODO: process POST request
-
-        return entity;
+    public void registrationComplete(@PathVariable String statementId,
+            @RequestBody FinishRegistrationRequestDto requestRegistration) {
+        dealService.finishRegistration(statementId, requestRegistration);
     }
 
 

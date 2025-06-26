@@ -7,11 +7,13 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +25,7 @@ import neo.study.deal.dto.PaymentScheduleElementDto;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "credit")
 public class Credit {
     @Id
@@ -51,5 +54,6 @@ public class Credit {
     @Column(name = "salary_client")
     private Boolean salaryClient;
 
+    @Enumerated(EnumType.STRING)
     private CreditStatus status;
 }

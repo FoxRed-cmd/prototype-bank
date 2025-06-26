@@ -1,6 +1,7 @@
 package neo.study.deal.entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -58,7 +59,8 @@ public class Statement {
     @Column(name = "sign_date")
     private LocalDate signDate;
 
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "status_history")
-    private List<StatementStatusHistoryDto> statusHistory;
+    private List<StatementStatusHistoryDto> statusHistory = new ArrayList<>();
 }
