@@ -1,6 +1,14 @@
 spring:
     application:
         name: deal
+    jpa:
+        hibernate:
+            ddl-auto: update
+    datasource:
+        url: ${URL_DB}
+        username: ${USER_DB}
+        password: ${PASSWORD_DB}
+        driver-class-name: org.postgresql.Driver
 server:
     port: 8081
 services:

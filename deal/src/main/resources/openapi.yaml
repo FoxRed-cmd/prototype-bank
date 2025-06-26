@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-    title: Calculator API
+    title: Deal DTO
     version: 1.0.0
 components:
     schemas:
@@ -27,6 +27,7 @@ components:
                     type: string
                 passportNumber:
                     type: string
+
         LoanOfferDto:
             type: object
             properties:
@@ -48,3 +49,125 @@ components:
                     type: boolean
                 isSalaryClient:
                     type: boolean
+
+        EmploymentDto:
+            type: object
+            properties:
+                employmentStatus:
+                    $ref: "#/components/schemas/EmploymentStatus"
+                employerINN:
+                    type: string
+                salary:
+                    type: number
+                position:
+                    $ref: "#/components/schemas/Position"
+                workExperienceTotal:
+                    type: integer
+                    format: int32
+                workExperienceCurrent:
+                    type: integer
+                    format: int32
+
+        ScoringDataDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                middleName:
+                    type: string
+                gender:
+                    $ref: "#/components/schemas/Gender"
+                birthdate:
+                    type: string
+                    format: date
+                passportSeries:
+                    type: string
+                passportNumber:
+                    type: string
+                passportIssueDate:
+                    type: string
+                    format: date
+                passportIssueBranch:
+                    type: string
+                maritalStatus:
+                    $ref: "#/components/schemas/MaritalStatus"
+                dependentAmount:
+                    type: integer
+                    format: int32
+                employment:
+                    $ref: "#/components/schemas/EmploymentDto"
+                accountNumber:
+                    type: string
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
+
+        PaymentScheduleElementDto:
+            type: object
+            properties:
+                number:
+                    type: integer
+                    format: int32
+                date:
+                    type: string
+                    format: date
+                totalPayment:
+                    type: number
+                interestPayment:
+                    type: number
+                debtPayment:
+                    type: number
+                remainingDebt:
+                    type: number
+
+        StatementStatusHistoryDto:
+            type: object
+            properties:
+                status:
+                    $ref: "#/components/schemas/ApplicationStatus"
+                time:
+                    type: string
+                    format: date-time
+                changeType:
+                    $ref: "#/components/schemas/ChangeType"
+
+        Gender:
+            type: string
+            enum: [MALE, FEMALE]
+        MaritalStatus:
+            type: string
+            enum: [SINGLE, MARRIED, DIVORCED, WIDOWED]
+        EmploymentStatus:
+            type: string
+            enum: [EMPLOYED, UNEMPLOYED, SELF_EMPLOYED, BUSINESS_OWNER]
+        Position:
+            type: string
+            enum: [MIDDLE_MANAGER, TOP_MANAGER]
+        CreditStatus:
+            type: string
+            enum: [CALCULATED, ISSUED]
+        ApplicationStatus:
+            type: string
+            enum:
+                [
+                    PREAPPROVAL,
+                    APPROVED,
+                    CC_DENIED,
+                    CC_APPROVED,
+                    PREPARE_DOCUMENTS,
+                    DOCUMENT_CREATED,
+                    CLIENT_DENIED,
+                    DOCUMENT_SIGNED,
+                    CREDIT_ISSUED,
+                ]
+        ChangeType:
+            type: string
+            enum: [AUTOMATIC, MANUAL]
