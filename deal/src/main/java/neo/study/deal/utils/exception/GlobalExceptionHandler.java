@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -19,6 +20,16 @@ public class GlobalExceptionHandler {
         Matcher matcher = Pattern.compile("\\[[^\\]]*\\]").matcher(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(matcher.find() ? matcher.group() : ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<String> handleResourceAccessException(ResourceAccessException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
