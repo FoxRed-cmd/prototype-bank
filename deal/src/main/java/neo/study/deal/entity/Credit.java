@@ -14,17 +14,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import neo.study.deal.dto.CreditStatus;
 import neo.study.deal.dto.PaymentScheduleElementDto;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @Table(name = "credit")
 public class Credit {
@@ -33,15 +31,19 @@ public class Credit {
     @Column(name = "credit_id")
     private UUID id;
 
+    @Column(name = "amount")
     private BigDecimal amount;
 
+    @Column(name = "term")
     private Integer term;
 
     @Column(name = "monthly_payment")
     private BigDecimal monthlyPayment;
 
+    @Column(name = "rate")
     private BigDecimal rate;
 
+    @Column(name = "psk")
     private BigDecimal psk;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -55,5 +57,6 @@ public class Credit {
     private Boolean salaryClient;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private CreditStatus status;
 }

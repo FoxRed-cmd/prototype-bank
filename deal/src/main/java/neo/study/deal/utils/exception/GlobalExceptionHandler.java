@@ -27,9 +27,13 @@ public class GlobalExceptionHandler {
     private final StatementService statementService;
 
     @ExceptionHandler(HttpClientErrorException.class)
-    public ResponseEntity<String> handleLoanRejection(HttpClientErrorException ex) {
+    public ResponseEntity<String> handleLoanRejection(HttpClientErrorException ex, HttpServletRequest request) {
         Matcher matcher = Pattern.compile("\\[[^\\]]*\\]").matcher(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+
+        String statementId = getStatementIdFromPath(request.getRequestURI());
+        updateStatusAfterError(UUID.fromString(statementId));
+
+        return ResponseEntity.status(ex.getStatusCode())
                 .body(matcher.find() ? matcher.group() : ex.getMessage());
     }
 
@@ -53,17 +57,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         Throwable cause = ex.getCause();
 
-        String path = request.getRequestURI();
-        String statementId = path.substring(path.lastIndexOf("/") + 1);
-        try {
-            if (statementId != null) {
-                var statement = statementService.updateStatusById(UUID.fromString(statementId),
-                        ApplicationStatus.CC_DENIED, ChangeType.AUTOMATIC);
-                log.info("Updated statement after error: {}", statement);
-            }
-        } catch (EntityNotFoundException e) {
-            log.error("Statement with id {} not found", statementId);
-        }
+        String statementId = getStatementIdFromPath(request.getRequestURI());
+        updateStatusAfterError(UUID.fromString(statementId));
 
         if (cause instanceof InvalidFormatException formatEx) {
             Class<?> targetType = formatEx.getTargetType();
@@ -78,4 +73,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "Malformed JSON request"));
     }
+
+    private void updateStatusAfterError(UUID statementId) {
+        try {
+            if (statementId != null) {
+                var statement = statementService.updateStatusById(statementId,
+                        ApplicationStatus.CC_DENIED, ChangeType.AUTOMATIC);
+                log.info("Updated statement after error: {}", statement);
+            }
+        } catch (EntityNotFoundException e) {
+            log.error("Statement with id {} not found", statementId);
+        }
+    }
+
+    private String getStatementIdFromPath(String path) {
+        return path.substring(path.lastIndexOf("/") + 1);
+    }
+
 }

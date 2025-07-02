@@ -49,13 +49,17 @@ public class DealService {
 	 *
 	 * По API приходит LoanStatementRequestDto
 	 *
-	 * На основе LoanStatementRequestDto создаётся сущность Client и сохраняется в БД.
+	 * На основе LoanStatementRequestDto создаётся сущность Client и сохраняется в
+	 * БД.
 	 *
-	 * Создаётся Statement со связью на только что созданный Client и сохраняется в БД.
+	 * Создаётся Statement со связью на только что созданный Client и сохраняется в
+	 * БД.
 	 *
-	 * Отправляется POST запрос на /calculator/offers МС Калькулятор через RestClient
+	 * Отправляется POST запрос на /calculator/offers МС Калькулятор через
+	 * RestClient
 	 *
-	 * Каждому элементу из списка List<LoanOfferDto> присваивается id созданной заявки (Statement)
+	 * Каждому элементу из списка List<LoanOfferDto> присваивается id созданной
+	 * заявки (Statement)
 	 *
 	 * Ответ на API - список из 4х LoanOfferDto от "худшего" к "лучшему".
 	 */
@@ -81,7 +85,8 @@ public class DealService {
 	 */
 	private List<LoanOfferDto> getLoanOffers(LoanStatementRequestDto request) {
 		return restClient.post().uri(offersApi).body(request).retrieve()
-				.body(new ParameterizedTypeReference<>() {});
+				.body(new ParameterizedTypeReference<>() {
+				});
 	}
 
 	/*
@@ -102,7 +107,8 @@ public class DealService {
 	 *
 	 * Достаётся из БД заявка(Statement) по statementId из LoanOfferDto.
 	 *
-	 * В заявке обновляется статус, история статусов(List<StatementStatusHistoryDto>), принятое
+	 * В заявке обновляется статус, история
+	 * статусов(List<StatementStatusHistoryDto>), принятое
 	 * предложение LoanOfferDto устанавливается в поле appliedOffer.
 	 *
 	 * Заявка сохраняется.
@@ -122,17 +128,21 @@ public class DealService {
 	/*
 	 * Завершение регистрации + полный подсчёт кредита
 	 *
-	 * По API приходит объект FinishRegistrationRequestDto и параметр statementId (String).
+	 * По API приходит объект FinishRegistrationRequestDto и параметр statementId
+	 * (String).
 	 *
 	 * Достаётся из БД заявка(Statement) по statementId.
 	 *
-	 * ScoringDataDto насыщается информацией из FinishRegistrationRequestDto и Client, который
+	 * ScoringDataDto насыщается информацией из FinishRegistrationRequestDto и
+	 * Client, который
 	 * хранится в Statement
 	 *
-	 * Отправляется POST запрос на /calculator/calc МС Калькулятор с телом ScoringDataDto через
+	 * Отправляется POST запрос на /calculator/calc МС Калькулятор с телом
+	 * ScoringDataDto через
 	 * RestClient.
 	 *
-	 * На основе полученного из кредитного конвейера CreditDto создаётся сущность Credit и
+	 * На основе полученного из кредитного конвейера CreditDto создаётся сущность
+	 * Credit и
 	 * сохраняется в базу со статусом CALCULATED.
 	 *
 	 * В заявке обновляется статус, история статусов.
@@ -146,20 +156,14 @@ public class DealService {
 		log.info("Input data: {}", requestRegistration);
 
 		var statement = statementService.getById(UUID.fromString(statementId));
-		var scoringData = scoringDataSaturation(statement.getClient(), statement.getAppliedOffer(),
+		var scoringData = fillScoringData(statement.getClient(), statement.getAppliedOffer(),
 				requestRegistration);
 
 		log.info("Statement: {}", statement);
 		log.info("Scoring data: {}", scoringData);
 
-		try {
-			var creditDto = calculateCredit(scoringData);
-			processRegistration(creditDto, statement);
-		} catch (Exception e) {
-			statement = statementService.updateStatus(statement, ApplicationStatus.CC_DENIED,
-					ChangeType.AUTOMATIC);
-			log.info("Updated statement after error: {}", statement);
-		}
+		var creditDto = calculateCredit(scoringData);
+		processRegistration(creditDto, statement);
 	}
 
 	/*
@@ -187,9 +191,10 @@ public class DealService {
 	}
 
 	/*
-	 * Метод насыщения ScoringDataDto данными из FinishRegistrationRequestDto, Client, AppliedOffer
+	 * Метод насыщения ScoringDataDto данными из FinishRegistrationRequestDto,
+	 * Client, AppliedOffer
 	 */
-	ScoringDataDto scoringDataSaturation(Client client, LoanOfferDto appliedOffer,
+	ScoringDataDto fillScoringData(Client client, LoanOfferDto appliedOffer,
 			FinishRegistrationRequestDto requestRegistration) {
 		var scoringData = new ScoringDataDto();
 

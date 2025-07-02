@@ -1,20 +1,21 @@
 package neo.study.deal.entity;
 
 import java.math.BigDecimal;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import neo.study.deal.dto.EmploymentStatus;
 import neo.study.deal.dto.Position;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class Employment {
+    private UUID id;
     private EmploymentStatus status;
     private String employerINN;
     private BigDecimal salary;

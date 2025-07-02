@@ -18,18 +18,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.StatementStatusHistoryDto;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "statement")
 @Builder
 public class Statement {
@@ -47,6 +45,7 @@ public class Statement {
     private Credit credit;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private ApplicationStatus status;
 
     @Column(name = "creation_date")

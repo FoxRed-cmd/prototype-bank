@@ -13,17 +13,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import neo.study.deal.dto.Gender;
 import neo.study.deal.dto.MaritalStatus;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "client")
 @Builder
 public class Client {
@@ -45,9 +43,11 @@ public class Client {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    @Column(name = "email")
     private String email;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
     private Gender gender;
 
     @Enumerated(EnumType.STRING)
@@ -58,10 +58,13 @@ public class Client {
     private Integer dependentAmount;
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "passport")
     private Passport passport;
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "employment")
     private Employment employment;
 
+    @Column(name = "account_number")
     private String accountNumber;
 }

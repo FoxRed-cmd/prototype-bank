@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.StatementStatusHistoryDto;
@@ -14,6 +15,7 @@ import neo.study.deal.entity.Statement;
 import neo.study.deal.repository.StatementRepository;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StatementService {
     private final StatementRepository statementRepository;
@@ -22,10 +24,20 @@ public class StatementService {
      * Создание заявки со ссылкой на клиента в базе данных
      */
     public Statement create(Client client) {
-        var statement = Statement.builder().client(client).creationDate(LocalDate.now())
-                .status(ApplicationStatus.PREAPPROVAL).build();
+        log.debug("Start creating statement for client: {}", client);
+
+        var statement = Statement.builder()
+                .client(client)
+                .credit(null)
+                .creationDate(LocalDate.now())
+                .status(ApplicationStatus.PREAPPROVAL)
+                .appliedOffer(null)
+                .signDate(null)
+                .build();
 
         addStatusHistory(statement, statement.getStatus(), ChangeType.AUTOMATIC);
+
+        log.debug("Created statement and saved in DB: {}", statement);
 
         return statementRepository.save(statement);
     }
@@ -35,9 +47,14 @@ public class StatementService {
      */
     public Statement updateStatus(Statement statement, ApplicationStatus status,
             ChangeType changeType) {
+        log.debug("Updating status for statement: {}", statement);
         statement.setStatus(status);
 
+        log.debug("New status: {}, change type: {}", status, changeType);
+
         addStatusHistory(statement, status, changeType);
+
+        log.debug("Updated statement and saved in DB: {}", statement);
 
         return statementRepository.save(statement);
     }
@@ -59,6 +76,8 @@ public class StatementService {
         history.setChangeType(changeType);
 
         statement.getStatusHistory().add(history);
+
+        log.debug("Added status history: {}", history);
     }
 
     /*
