@@ -2,9 +2,11 @@ package neo.study.deal.service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -18,6 +20,7 @@ import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
 import neo.study.deal.dto.ScoringDataDto;
 import neo.study.deal.entity.Client;
+import neo.study.deal.entity.Statement;
 
 @Slf4j
 @Service
@@ -61,25 +64,35 @@ public class DealService {
 		log.info("Start processing statement");
 		log.info("Input data: {}", request);
 
-		var offersList = restClient.post().uri(offersApi).body(request).retrieve()
-				.body(new ParameterizedTypeReference<List<LoanOfferDto>>() {});
-
-		log.info("Offers list");
-		offersList.forEach(offer -> log.info("Offer: {}", offer));
-
 		var client = clientService.create(request);
 		var statement = statementService.create(client);
 
 		log.info("Client created in DB: {}", client);
 		log.info("Statement created in DB: {}", statement);
 
-		if (offersList != null && !offersList.isEmpty()) {
-			offersList.forEach(offer -> offer.setStatementId(statement.getId()));
-			offersList = offersList.stream()
-					.sorted(Comparator.comparing(LoanOfferDto::getTerm).reversed()).toList();
-		}
+		return Optional.ofNullable(getLoanOffers(request))
+				.map(offers -> enrichAndSortOffers(offers, statement.getId()))
+				.orElseThrow(() -> new HttpClientErrorException(HttpStatus.BAD_REQUEST,
+						"The service returned an empty list of offers"));
+	}
 
-		return offersList;
+	/*
+	 * Получает предложения кредита по API
+	 */
+	private List<LoanOfferDto> getLoanOffers(LoanStatementRequestDto request) {
+		return restClient.post().uri(offersApi).body(request).retrieve()
+				.body(new ParameterizedTypeReference<>() {});
+	}
+
+	/*
+	 * Дополняет предложения кредита и сортирует по уменьшению процентной ставки
+	 */
+	private List<LoanOfferDto> enrichAndSortOffers(List<LoanOfferDto> offers, UUID statementId) {
+		log.info("Offers list");
+		var sortedOffers = offers.stream().peek(offer -> offer.setStatementId(statementId))
+				.sorted(Comparator.comparing(LoanOfferDto::getRate).reversed()).toList();
+		sortedOffers.forEach(offer -> log.info("{}", offer));
+		return sortedOffers;
 	}
 
 	/*
@@ -126,37 +139,46 @@ public class DealService {
 	 *
 	 * Заявка сохраняется.
 	 */
-	@Transactional
+
 	public void finishRegistration(String statementId,
 			FinishRegistrationRequestDto requestRegistration) {
 		log.info("Finish registration for statement: {}", statementId);
 		log.info("Input data: {}", requestRegistration);
 
 		var statement = statementService.getById(UUID.fromString(statementId));
-
-		log.info("Statement: {}", statement);
-
 		var scoringData = scoringDataSaturation(statement.getClient(), statement.getAppliedOffer(),
 				requestRegistration);
 
+		log.info("Statement: {}", statement);
 		log.info("Scoring data: {}", scoringData);
 
 		try {
-			var creditDto = restClient.post().uri(calcApi).body(scoringData).retrieve()
-					.body(CreditDto.class);
-
-			log.info("CreditDto: {}", creditDto);
-
-			var credit = creditService.create(creditDto);
-
-			log.info("Created credit in DB: {}", credit);
-
-		} catch (HttpClientErrorException ex) {
+			var creditDto = calculateCredit(scoringData);
+			processRegistration(creditDto, statement);
+		} catch (Exception e) {
 			statement = statementService.updateStatus(statement, ApplicationStatus.CC_DENIED,
 					ChangeType.AUTOMATIC);
 			log.info("Updated statement after error: {}", statement);
-			throw ex;
 		}
+	}
+
+	/*
+	 * Получает условия кредита по API
+	 */
+	private CreditDto calculateCredit(ScoringDataDto scoringData) {
+		return restClient.post().uri(calcApi).body(scoringData).retrieve().body(CreditDto.class);
+	}
+
+	/*
+	 * Обработка результата кредитного конвейера
+	 */
+	@Transactional
+	private void processRegistration(CreditDto creditDto, Statement statement) {
+		log.info("CreditDto: {}", creditDto);
+
+		var credit = creditService.create(creditDto);
+
+		log.info("Created credit in DB: {}", credit);
 
 		statement = statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
 				ChangeType.AUTOMATIC);
@@ -167,7 +189,7 @@ public class DealService {
 	/*
 	 * Метод насыщения ScoringDataDto данными из FinishRegistrationRequestDto, Client, AppliedOffer
 	 */
-	private ScoringDataDto scoringDataSaturation(Client client, LoanOfferDto appliedOffer,
+	ScoringDataDto scoringDataSaturation(Client client, LoanOfferDto appliedOffer,
 			FinishRegistrationRequestDto requestRegistration) {
 		var scoringData = new ScoringDataDto();
 

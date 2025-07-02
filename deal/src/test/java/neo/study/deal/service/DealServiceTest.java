@@ -2,12 +2,16 @@ package neo.study.deal.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +21,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
@@ -39,6 +42,8 @@ public class DealServiceTest {
     private RestClient.RequestBodyUriSpec uriSpec;
     @Mock
     private RestClient.RequestBodySpec bodySpec;
+    @Mock
+    private RestClient.RequestBodyUriSpec requestSpec;
     @Mock
     private RestClient.ResponseSpec responseSpec;
 
@@ -146,36 +151,36 @@ public class DealServiceTest {
     }
 
     @Test
-    void testFinishRegistration_HttpError() {
-        var statementId = UUID.randomUUID();
-        var statement = new Statement();
+    void finishRegistration_calculationFails_updatesToDenied() {
+        // Arrange
+        String statementId = UUID.randomUUID().toString();
+        var request = new FinishRegistrationRequestDto();
+        var statement = mock(Statement.class);
         var client = new Client();
-        client.setFirstName("Ivan");
-        client.setLastName("Ivanov");
-        client.setMiddleName("Ivanovich");
-        client.setBirthDate(LocalDate.of(1990, 1, 1));
+        var offer = new LoanOfferDto();
+        var scoringData = new ScoringDataDto();
 
-        var passport = new Passport();
-        passport.setSeries("1234");
-        passport.setNumber("567890");
-        client.setPassport(passport);
-        statement.setClient(client);
-        statement.setAppliedOffer(new LoanOfferDto());
+        when(statementService.getById(UUID.fromString(statementId))).thenReturn(statement);
+        when(statement.getClient()).thenReturn(client);
+        when(statement.getAppliedOffer()).thenReturn(offer);
 
-        Mockito.when(statementService.getById(statementId)).thenReturn(statement);
-        Mockito.when(restClient.post()).thenReturn(uriSpec);
-        Mockito.when(uriSpec.uri("/calculator/calc")).thenReturn(bodySpec);
-        Mockito.when(bodySpec.body(Mockito.any(ScoringDataDto.class))).thenReturn(bodySpec);
-        Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
-        Mockito.when(responseSpec.body(CreditDto.class))
-                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        DealService spyService = Mockito.spy(dealService);
+        doReturn(scoringData).when(spyService).scoringDataSaturation(client, offer, request);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            dealService.finishRegistration(statementId.toString(),
-                    new FinishRegistrationRequestDto());
-        });
+        when(restClient.post()).thenReturn(requestSpec);
+        when(requestSpec.uri("/calculator/calc")).thenReturn(bodySpec);
+        when(bodySpec.body(scoringData)).thenReturn(bodySpec);
+        when(bodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(CreditDto.class))
+                .thenThrow(new RuntimeException("Calculation failed"));
 
-        Mockito.verify(statementService).updateStatus(statement, ApplicationStatus.CC_DENIED,
+        when(statementService.updateStatus(statement, ApplicationStatus.CC_DENIED,
+                ChangeType.AUTOMATIC)).thenReturn(statement);
+
+        spyService.finishRegistration(statementId, request);
+
+        verify(creditService, never()).create(any());
+        verify(statementService).updateStatus(statement, ApplicationStatus.CC_DENIED,
                 ChangeType.AUTOMATIC);
     }
 }

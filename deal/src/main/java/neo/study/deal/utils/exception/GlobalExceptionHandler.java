@@ -1,6 +1,7 @@
 package neo.study.deal.utils.exception;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
@@ -12,9 +13,19 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import neo.study.deal.dto.ApplicationStatus;
+import neo.study.deal.dto.ChangeType;
+import neo.study.deal.service.StatementService;
 
+@Slf4j
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+    private final StatementService statementService;
+
     @ExceptionHandler(HttpClientErrorException.class)
     public ResponseEntity<String> handleLoanRejection(HttpClientErrorException ex) {
         Matcher matcher = Pattern.compile("\\[[^\\]]*\\]").matcher(ex.getMessage());
@@ -38,8 +49,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<?> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+    public ResponseEntity<?> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
         Throwable cause = ex.getCause();
+
+        String path = request.getRequestURI();
+        String statementId = path.substring(path.lastIndexOf("/") + 1);
+        try {
+            if (statementId != null) {
+                var statement = statementService.updateStatusById(UUID.fromString(statementId),
+                        ApplicationStatus.CC_DENIED, ChangeType.AUTOMATIC);
+                log.info("Updated statement after error: {}", statement);
+            }
+        } catch (EntityNotFoundException e) {
+            log.error("Statement with id {} not found", statementId);
+        }
+
         if (cause instanceof InvalidFormatException formatEx) {
             Class<?> targetType = formatEx.getTargetType();
             if (targetType.isEnum()) {

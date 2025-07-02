@@ -42,6 +42,11 @@ public class StatementService {
         return statementRepository.save(statement);
     }
 
+    public Statement updateStatusById(UUID id, ApplicationStatus status, ChangeType changeType) {
+        var statement = getById(id);
+        return updateStatus(statement, status, changeType);
+    }
+
     /*
      * Метод для добавления статуса в историю статусов заявки
      */
