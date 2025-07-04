@@ -1,0 +1,17 @@
+{"properties": [
+  {
+    "name": "services.calculator.base-url",
+    "type": "java.lang.String",
+    "description": "A description for 'services.calculator.base-url'"
+  },
+  {
+    "name": "services.calculator.offers-api",
+    "type": "java.lang.String",
+    "description": "A description for 'services.calculator.offers-api'"
+  },
+  {
+    "name": "services.calculator.calc-api",
+    "type": "java.lang.String",
+    "description": "A description for 'services.calculator.calc-api'"
+  }
+]}

@@ -1,0 +1,23 @@
+spring:
+    application:
+        name: deal
+    jpa:
+        hibernate:
+            ddl-auto: update
+    datasource:
+        url: ${URL_DB}
+        username: ${USER_DB}
+        password: ${PASSWORD_DB}
+        driver-class-name: org.postgresql.Driver
+server:
+    port: 8081
+services:
+    calculator:
+        base-url: http://localhost:8080
+        offers-api: /calculator/offers
+        calc-api: /calculator/calc
+logging:
+    pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    level:
+        root: INFO
