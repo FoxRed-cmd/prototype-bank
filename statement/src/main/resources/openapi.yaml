@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+    title: Statement DTO
+    version: 1.0.0
+components:
+    schemas:
+        LoanStatementRequestDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                middleName:
+                    type: string
+                email:
+                    type: string
+                birthDate:
+                    type: string
+                    format: date
+                passportSeries:
+                    type: string
+                passportNumber:
+                    type: string
+
+        LoanOfferDto:
+            type: object
+            properties:
+                statementId:
+                    type: string
+                    format: uuid
+                requestedAmount:
+                    type: number
+                totalAmount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
