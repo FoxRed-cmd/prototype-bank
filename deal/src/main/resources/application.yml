@@ -3,12 +3,15 @@ spring:
         name: deal
     jpa:
         hibernate:
-            ddl-auto: update
+            ddl-auto: validate
     datasource:
         url: ${URL_DB}
         username: ${USER_DB}
         password: ${PASSWORD_DB}
         driver-class-name: org.postgresql.Driver
+    liquibase:
+        enabled: true
+        change-log: classpath:db/changelog/db.changelog-master.xml
 server:
     port: 8081
 services:
