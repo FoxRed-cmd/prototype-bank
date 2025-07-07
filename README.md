@@ -8,8 +8,10 @@
 -   **Spring Boot:** 3.x
 -   **Lombok:** для генерации шаблонного кода
 -   **Openapi generator maven plugin:** генерация моделей из спецификации openapi.yaml
+-   **Liquibase:** миграции
 
 ## SwaggerUI
 
 -   **MVP 1 Calculator:** http://localhost:8080/swagger-ui/index.html
 -   **MVP 2 Deal:** http://localhost:8081/swagger-ui/index.html
+-   **MVP 3 Statement:** http://localhost:8082/swagger-ui/index.html
