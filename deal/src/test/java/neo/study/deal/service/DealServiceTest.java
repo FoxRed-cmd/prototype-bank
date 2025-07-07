@@ -77,7 +77,6 @@ public class DealServiceTest {
                 var statement = new Statement();
                 statement.setId(UUID.randomUUID());
 
-                // Mocking restClient chain
                 Mockito.when(restClient.post()).thenReturn(uriSpec);
                 Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
                 Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
