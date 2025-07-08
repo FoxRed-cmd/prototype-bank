@@ -31,11 +31,7 @@ public class CalculatorService {
                 if (!errors.isEmpty()) {
                         throw new NotValidException(errors, "Validation error");
                 }
-
-                log.info("Starting the pre-scoring process for the client: {} {}",
-                                loanStatementData.getFirstName(), loanStatementData.getLastName());
-
-                log.info("Input data: {}", loanStatementData);
+                log.info("Starting the pre-scoring process for the client: {}", loanStatementData);
 
                 List<LoanOfferDto> offers = new ArrayList<>();
 
@@ -57,25 +53,25 @@ public class CalculatorService {
                 log.info("Start scoring result calculation for scoringData: {}", scoringData);
 
                 checkLoanApproval(scoringData);
-                log.info("Loan approval check passed");
+                log.debug("Loan approval check passed");
 
                 BigDecimal rate = creditCalculationHelper.calculateRate(scoringData);
-                log.info("Rate calculated successfully: {}", rate);
+                log.debug("Rate calculated successfully: {}", rate);
 
-                BigDecimal totalAmount = creditCalculationHelper.calculateTotalAmount(
-                                scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
-                log.info("Total amount calculated successfully: {}", totalAmount);
+                BigDecimal totalAmount = creditCalculationHelper
+                                .calculateTotalAmount(scoringData.getIsInsuranceEnabled(), scoringData.getAmount());
+                log.debug("Total amount calculated successfully: {}", totalAmount);
 
                 BigDecimal monthlyPayment = creditCalculationHelper
                                 .calculateMonthlyPayment(totalAmount, rate, scoringData.getTerm());
-                log.info("Monthly payment calculated successfully: {}", monthlyPayment);
+                log.debug("Monthly payment calculated successfully: {}", monthlyPayment);
 
-                BigDecimal psk = creditCalculationHelper.calculatePsk(monthlyPayment,
-                                scoringData.getTerm(), totalAmount);
+                BigDecimal psk = creditCalculationHelper
+                                .calculatePsk(monthlyPayment, scoringData.getTerm(), totalAmount);
                 List<PaymentScheduleElementDto> paymentSchedule = creditCalculationHelper
                                 .generatePaymentSchedule(totalAmount, rate, scoringData.getTerm());
-                log.info("Payment schedule generated successfully");
-                paymentSchedule.stream().forEach(ps -> log.info("Payment schedule: {}", ps));
+                log.debug("Payment schedule generated successfully");
+                paymentSchedule.stream().forEach(ps -> log.debug("Payment schedule: {}", ps));
 
                 CreditDto creditDto = CreditDto.builder().amount(totalAmount)
                                 .term(scoringData.getTerm()).monthlyPayment(monthlyPayment)
@@ -94,9 +90,11 @@ public class CalculatorService {
          *
          * Сумма займа больше, чем 24 зарплат → отказ
          *
-         * Возраст менее 20 или более 65 лет или на момент окончания кредита старше 65 лет → отказ
+         * Возраст менее 20 или более 65 лет или на момент окончания кредита старше 65
+         * лет → отказ
          *
-         * Стаж работы: Общий стаж менее 18 месяцев → отказ; Текущий стаж менее 3 месяцев → отказ
+         * Стаж работы: Общий стаж менее 18 месяцев → отказ; Текущий стаж менее 3
+         * месяцев → отказ
          */
         private void checkLoanApproval(ScoringDataDto scoringData) {
 
