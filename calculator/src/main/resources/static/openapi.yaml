@@ -1,0 +1,232 @@
+openapi: 3.1.0
+info:
+    title: Calculator API
+    version: 1.0.0
+servers:
+    - url: "http://localhost:8080"
+      description: Generated server url
+paths:
+    /calculator/offers:
+        post:
+            tags:
+                - calculator-controller
+            operationId: offers
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanStatementRequestDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/LoanOfferDto"
+    /calculator/calc:
+        post:
+            tags:
+                - calculator-controller
+            operationId: calc
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ScoringDataDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                $ref: "#/components/schemas/CreditDto"
+components:
+    schemas:
+        LoanStatementRequestDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                    example: 150000
+                term:
+                    type: integer
+                    format: int32
+                    example: 12
+                firstName:
+                    type: string
+                    example: Иван
+                lastName:
+                    type: string
+                    example: Иванов
+                middleName:
+                    type: string
+                    example: Иванович
+                email:
+                    type: string
+                    example: 3J7wI@example.com
+                birthDate:
+                    type: string
+                    format: date
+                    example: 2000-01-01
+                passportSeries:
+                    type: string
+                    example: 1234
+                passportNumber:
+                    type: string
+                    example: 123456
+        LoanOfferDto:
+            type: object
+            properties:
+                statementId:
+                    type: string
+                    format: uuid
+                requestedAmount:
+                    type: number
+                totalAmount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
+        EmploymentDto:
+            type: object
+            properties:
+                employmentStatus:
+                    type: string
+                    enum:
+                        - EMPLOYED
+                        - UNEMPLOYED
+                        - SELF_EMPLOYED
+                        - BUSINESS_OWNER
+                employerINN:
+                    type: string
+                    example: 123456789021
+                salary:
+                    type: number
+                    example: 43000
+                position:
+                    type: string
+                    enum:
+                        - MIDDLE_MANAGER
+                        - TOP_MANAGER
+                workExperienceTotal:
+                    type: integer
+                    format: int32
+                    example: 24
+                workExperienceCurrent:
+                    type: integer
+                    format: int32
+                    example: 12
+        ScoringDataDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                    example: 150000
+                term:
+                    type: integer
+                    format: int32
+                    example: 12
+                firstName:
+                    type: string
+                    example: Иван
+                lastName:
+                    type: string
+                    example: Иванов
+                middleName:
+                    type: string
+                    example: Иванович
+                gender:
+                    type: string
+                    enum:
+                        - MALE
+                        - FEMALE
+                birthdate:
+                    type: string
+                    format: date
+                    example: 2000-01-01
+                passportSeries:
+                    type: string
+                    example: 1234
+                passportNumber:
+                    type: string
+                    example: 123456
+                passportIssueDate:
+                    type: string
+                    format: date
+                    example: 2020-01-01
+                passportIssueBranch:
+                    type: string
+                    example: Отделение УФМС города Москвы
+                maritalStatus:
+                    type: string
+                    enum:
+                        - SINGLE
+                        - MARRIED
+                        - DIVORCED
+                        - WIDOWED
+                dependentAmount:
+                    type: integer
+                    format: int32
+                    example: 1
+                employment:
+                    $ref: "#/components/schemas/EmploymentDto"
+                accountNumber:
+                    type: string
+                    example: 12345678901234567890
+                isInsuranceEnabled:
+                    type: boolean
+                    example: false
+                isSalaryClient:
+                    type: boolean
+                    example: false
+        CreditDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                psk:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
+                paymentSchedule:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/PaymentScheduleElementDto"
+        PaymentScheduleElementDto:
+            type: object
+            properties:
+                number:
+                    type: integer
+                    format: int32
+                date:
+                    type: string
+                    format: date
+                totalPayment:
+                    type: number
+                interestPayment:
+                    type: number
+                debtPayment:
+                    type: number
+                remainingDebt:
+                    type: number

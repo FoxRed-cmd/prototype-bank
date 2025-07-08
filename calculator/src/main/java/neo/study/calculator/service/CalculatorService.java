@@ -84,7 +84,7 @@ public class CalculatorService {
                                 .isSalaryClient(scoringData.getIsSalaryClient())
                                 .paymentSchedule(paymentSchedule).build();
 
-                log.debug("Scoring result calculated successfully: {}", creditDto);
+                log.info("Scoring result calculated successfully: {}", creditDto);
 
                 return creditDto;
         }
