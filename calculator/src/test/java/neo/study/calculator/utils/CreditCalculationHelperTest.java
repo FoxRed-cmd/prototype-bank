@@ -66,8 +66,7 @@ public class CreditCalculationHelperTest {
 
     @Test
     void testCalculatePsk() {
-        BigDecimal psk =
-                helper.calculatePsk(new BigDecimal("8791.59"), 12, new BigDecimal("100000"));
+        BigDecimal psk = helper.calculatePsk(new BigDecimal("8791.59"), 12, new BigDecimal("100000"));
         assertEquals(new BigDecimal("5.50"), psk);
     }
 
@@ -89,23 +88,39 @@ public class CreditCalculationHelperTest {
         ScoringDataDto dto = createScoringData();
         BigDecimal resultRate = helper.calculateRate(dto);
 
-        // 15 + 0.5 (EMPLOYED) - 3 (MARRIED) - 2 (MIDDLE_MANAGER) - 3 (FEMALE AND AGE BETWEEN 32 AND
+        // 15 + 0.5 (EMPLOYED) - 3 (MARRIED) - 2 (MIDDLE_MANAGER) - 3 (FEMALE AND AGE
+        // BETWEEN 32 AND
         // 60) = 7.5
         assertEquals(new BigDecimal("7.5"), resultRate);
     }
 
     private ScoringDataDto createScoringData() {
         EmploymentDto employment = EmploymentDto.builder()
-                .employmentStatus(EmploymentStatus.EMPLOYED).position(Position.MIDDLE_MANAGER)
-                .employerINN("1234567890").salary(new BigDecimal("50000")).workExperienceCurrent(12)
-                .workExperienceTotal(36).build();
+                .employmentStatus(EmploymentStatus.EMPLOYED)
+                .position(Position.MIDDLE_MANAGER)
+                .employerINN("1234567890")
+                .salary(new BigDecimal("50000"))
+                .workExperienceCurrent(12)
+                .workExperienceTotal(36)
+                .build();
 
-        return ScoringDataDto.builder().firstName("Анна").lastName("Ивановна").gender(Gender.FEMALE)
-                .birthdate(LocalDate.now().minusYears(35)).maritalStatus(MaritalStatus.MARRIED)
-                .employment(employment).accountNumber("40817810099910004312").passportSeries("1234")
-                .passportNumber("567890").passportIssueBranch("OVD")
-                .passportIssueDate(LocalDate.now().minusYears(10)).isInsuranceEnabled(false)
-                .isSalaryClient(false).dependentAmount(1).amount(new BigDecimal("100000")).term(12)
+        return ScoringDataDto.builder()
+                .firstName("Анна")
+                .lastName("Ивановна")
+                .gender(Gender.FEMALE)
+                .birthdate(LocalDate.now().minusYears(35))
+                .maritalStatus(MaritalStatus.MARRIED)
+                .employment(employment)
+                .accountNumber("40817810099910004312")
+                .passportSeries("1234")
+                .passportNumber("567890")
+                .passportIssueBranch("OVD")
+                .passportIssueDate(LocalDate.now().minusYears(10))
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .dependentAmount(1)
+                .amount(new BigDecimal("100000"))
+                .term(12)
                 .build();
     }
 }
