@@ -1,7 +1,65 @@
 openapi: 3.1.0
 info:
-    title: Deal DTO
+    title: Deal API
     version: 1.0.0
+servers:
+    - url: "http://localhost:8081"
+      description: Generated server url
+paths:
+    /deal/statement:
+        post:
+            tags:
+                - deal-controller
+            operationId: statementProcessing
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanStatementRequestDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/LoanOfferDto"
+    /deal/offer/select:
+        post:
+            tags:
+                - deal-controller
+            operationId: selectOffer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanOfferDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+    "/deal/calculate/{statementId}":
+        post:
+            tags:
+                - deal-controller
+            operationId: registrationComplete
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/FinishRegistrationRequestDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
 components:
     schemas:
         LoanStatementRequestDto:
@@ -9,24 +67,33 @@ components:
             properties:
                 amount:
                     type: number
+                    example: 150000
                 term:
                     type: integer
                     format: int32
+                    example: 12
                 firstName:
                     type: string
+                    example: Иван
                 lastName:
                     type: string
+                    example: Иванов
                 middleName:
                     type: string
+                    example: Иванович
                 email:
                     type: string
+                    example: 3J7wI@example.com
                 birthDate:
                     type: string
                     format: date
+                    example: 2000-01-01
                 passportSeries:
                     type: string
+                    example: 1234
                 passportNumber:
                     type: string
+                    example: 123456
 
         LoanOfferDto:
             type: object
@@ -57,16 +124,20 @@ components:
                     $ref: "#/components/schemas/EmploymentStatus"
                 employerINN:
                     type: string
+                    example: 123456789021
                 salary:
                     type: number
+                    example: 43000
                 position:
                     $ref: "#/components/schemas/Position"
                 workExperienceTotal:
                     type: integer
                     format: int32
+                    example: 24
                 workExperienceCurrent:
                     type: integer
                     format: int32
+                    example: 12
 
         ScoringDataDto:
             type: object
@@ -149,15 +220,19 @@ components:
                 dependentAmount:
                     type: integer
                     format: int32
+                    example: 1
                 passportIssueDate:
                     type: string
                     format: date
+                    example: 2010-01-01
                 passportIssueBranch:
                     type: string
+                    example: УФМС г. Москвы
                 employment:
                     $ref: "#/components/schemas/EmploymentDto"
                 accountNumber:
                     type: string
+                    example: 12345678901234567890
 
         CreditDto:
             type: object

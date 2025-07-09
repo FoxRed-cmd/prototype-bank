@@ -137,7 +137,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<inputSpec>${project.basedir}/src/main/resources/openapi.yaml</inputSpec>
+					<inputSpec>${project.basedir}/src/main/resources/static/openapi.yaml</inputSpec>
 					<modelPackage>neo.study.deal.dto</modelPackage>
 					<generatorName>java</generatorName>
 					<generateApiDocumentation>false</generateApiDocumentation>
