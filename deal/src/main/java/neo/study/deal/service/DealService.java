@@ -65,14 +65,13 @@ public class DealService {
 	 */
 	@Transactional
 	public List<LoanOfferDto> statementProcessing(LoanStatementRequestDto request) {
-		log.info("Start processing statement");
-		log.info("Input data: {}", request);
+		log.info("Start processing statement with input data: {}", request);
 
 		var client = clientService.create(request);
 		var statement = statementService.create(client);
 
-		log.info("Client created in DB: {}", client);
-		log.info("Statement created in DB: {}", statement);
+		log.debug("Client created in DB: {}", client);
+		log.debug("Statement created in DB: {}", statement);
 
 		return Optional.ofNullable(getLoanOffers(request))
 				.map(offers -> enrichAndSortOffers(offers, statement.getId()))
@@ -93,7 +92,7 @@ public class DealService {
 	 * Дополняет предложения кредита и сортирует по уменьшению процентной ставки
 	 */
 	private List<LoanOfferDto> enrichAndSortOffers(List<LoanOfferDto> offers, UUID statementId) {
-		log.info("Offers list");
+		log.info("Offers list result:");
 		var sortedOffers = offers.stream().peek(offer -> offer.setStatementId(statementId))
 				.sorted(Comparator.comparing(LoanOfferDto::getRate).reversed()).toList();
 		sortedOffers.forEach(offer -> log.info("{}", offer));
@@ -122,7 +121,7 @@ public class DealService {
 		statement = statementService.updateStatus(statement, ApplicationStatus.APPROVED,
 				ChangeType.AUTOMATIC);
 
-		log.info("Statement updated in DB: {}", statement);
+		log.debug("Statement updated in DB: {}", statement);
 	}
 
 	/*
@@ -159,8 +158,8 @@ public class DealService {
 		var scoringData = fillScoringData(statement.getClient(), statement.getAppliedOffer(),
 				requestRegistration);
 
-		log.info("Statement: {}", statement);
-		log.info("Scoring data: {}", scoringData);
+		log.debug("Statement: {}", statement);
+		log.debug("Scoring data: {}", scoringData);
 
 		var creditDto = calculateCredit(scoringData);
 		processRegistration(creditDto, statement);
@@ -178,16 +177,16 @@ public class DealService {
 	 */
 	@Transactional
 	private void processRegistration(CreditDto creditDto, Statement statement) {
-		log.info("CreditDto: {}", creditDto);
+		log.info("Start process registration for credit: {}", creditDto);
 
 		var credit = creditService.create(creditDto);
 
-		log.info("Created credit in DB: {}", credit);
+		log.debug("Created credit in DB: {}", credit);
 
 		statement = statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
 				ChangeType.AUTOMATIC);
 
-		log.info("Updated statement in DB: {}", statement);
+		log.debug("Updated statement in DB: {}", statement);
 	}
 
 	/*
@@ -196,6 +195,11 @@ public class DealService {
 	 */
 	ScoringDataDto fillScoringData(Client client, LoanOfferDto appliedOffer,
 			FinishRegistrationRequestDto requestRegistration) {
+		log.debug("Start fill scoring data");
+		log.debug("Client: {}", client);
+		log.debug("Applied offer: {}", appliedOffer);
+		log.debug("Request registration: {}", requestRegistration);
+
 		var scoringData = new ScoringDataDto();
 
 		scoringData.setAmount(appliedOffer.getRequestedAmount());
@@ -223,6 +227,7 @@ public class DealService {
 		scoringData.setIsInsuranceEnabled(appliedOffer.getIsInsuranceEnabled());
 		scoringData.setIsSalaryClient(appliedOffer.getIsSalaryClient());
 
+		log.debug("Filled scoring data: {}", scoringData);
 		return scoringData;
 	}
 }
