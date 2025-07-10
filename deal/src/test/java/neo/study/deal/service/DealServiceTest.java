@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,7 +23,9 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.eq;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
@@ -67,7 +70,7 @@ public class DealServiceTest {
 
         @SuppressWarnings("unchecked")
         @Test
-        void testStatementProcessing() {
+        void testStatementProcessing_Success() {
                 var request = new LoanStatementRequestDto();
                 var offer = new LoanOfferDto();
                 offer.setTerm(12);
@@ -92,6 +95,27 @@ public class DealServiceTest {
                 assertNotNull(result);
                 assertEquals(1, result.size());
                 assertEquals(statement.getId(), result.get(0).getStatementId());
+        }
+
+        @Test
+        void testStatementProcessing_NotSuccess() {
+                var request = new LoanStatementRequestDto();
+
+                Mockito.when(restClient.post()).thenReturn(uriSpec);
+                Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
+                Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
+                Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
+
+                Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class)))
+                                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid request"));
+
+                HttpClientErrorException exception = assertThrows(
+                                HttpClientErrorException.class,
+                                () -> dealService.statementProcessing(request));
+
+                // Дополнительные проверки на исключение
+                assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+                assertEquals("Invalid request", exception.getStatusText());
         }
 
         @Test
@@ -122,9 +146,9 @@ public class DealServiceTest {
 
                 var client = new Client();
                 client.setBirthDate(LocalDate.of(1990, 1, 1));
-                client.setFirstName("Ivan");
-                client.setLastName("Ivanov");
-                client.setMiddleName("Ivanovich");
+                client.setFirstName("Иван");
+                client.setLastName("Иванов");
+                client.setMiddleName("Иванович");
 
                 var passport = new Passport(UUID.randomUUID(), "1234", "567890", null, null);
                 client.setPassport(passport);
