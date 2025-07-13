@@ -12,6 +12,8 @@
 
 ## 🚀 Startup
 
+### `PowerShell`
+
 ### Install java and maven and set environment variables
 
 [Open JDK 21](https://jdk.java.net/21/) or Oracle JDK
