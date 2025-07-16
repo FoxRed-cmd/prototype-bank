@@ -1,11 +1,13 @@
 spring:
     application:
-        name: calculator
-loan:
-    base-rate: 15.0
-    insurance-discount: 3.0
-    salary-client-discount: 1.0
-    insurance-cost-percent: 5.0
+        name: statement
+server:
+    port: 8082
+services:
+    deal:
+        base-url: http://localhost:8081
+        statement-api: /deal/statement
+        select-api: /deal/offer/select
 springdoc:
     swagger-ui:
         url: /openapi.yaml

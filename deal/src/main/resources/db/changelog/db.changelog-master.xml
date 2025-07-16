@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1-create-client-table" author="neo-student">
+        <createTable tableName="client">
+            <column name="client_id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="account_number" type="varchar(255)" />
+            <column name="birth_date" type="date" />
+            <column name="dependent_amount" type="int" />
+            <column name="email" type="varchar(255)" />
+            <column name="employment" type="jsonb" />
+            <column name="first_name" type="varchar(255)" />
+            <column name="gender" type="varchar(255)" />
+            <column name="last_name" type="varchar(255)" />
+            <column name="marital_status" type="varchar(255)" />
+            <column name="middle_name" type="varchar(255)" />
+            <column name="passport" type="jsonb" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2-create-credit-table" author="neo-student">
+        <createTable tableName="credit">
+            <column name="credit_id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="amount" type="numeric(38,2)" />
+            <column name="insurance_enabled" type="boolean" />
+            <column name="monthly_payment" type="numeric(38,2)" />
+            <column name="payment_schedule" type="jsonb" />
+            <column name="psk" type="numeric(38,2)" />
+            <column name="rate" type="numeric(38,2)" />
+            <column name="salary_client" type="boolean" />
+            <column name="status" type="varchar(255)" />
+            <column name="term" type="int" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="3-create-statement-table" author="neo-student">
+        <createTable tableName="statement">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="applied_offer" type="jsonb" />
+            <column name="creation_date" type="date" />
+            <column name="sign_date" type="date" />
+            <column name="status" type="varchar(255)" />
+            <column name="status_history" type="jsonb" />
+            <column name="client_id" type="uuid" />
+            <column name="credit_id" type="uuid" />
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="statement"
+            baseColumnNames="client_id"
+            referencedTableName="client"
+            referencedColumnNames="client_id"
+            constraintName="fk_statement_client" />
+
+        <addForeignKeyConstraint
+            baseTableName="statement"
+            baseColumnNames="credit_id"
+            referencedTableName="credit"
+            referencedColumnNames="credit_id"
+            constraintName="fk_statement_credit" />
+    </changeSet>
+</databaseChangeLog>

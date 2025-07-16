@@ -3,12 +3,18 @@ spring:
         name: deal
     jpa:
         hibernate:
-            ddl-auto: update
+            ddl-auto: validate
     datasource:
-        url: ${URL_DB}
-        username: ${USER_DB}
-        password: ${PASSWORD_DB}
+        url: ${URL_DB:jdbc:postgresql://localhost:5432/TEST}
+        username: ${USER_DB:test}
+        password: ${PASSWORD_DB:test}
         driver-class-name: org.postgresql.Driver
+    liquibase:
+        enabled: true
+        change-log: classpath:db/changelog/db.changelog-master.xml
+springdoc:
+    swagger-ui:
+        url: /openapi.yaml
 server:
     port: 8081
 services:
