@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
+import neo.study.deal.dto.EmailMessage;
+import neo.study.deal.dto.EmailTheme;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
@@ -30,7 +32,7 @@ public class DealService {
 	private final ClientService clientService;
 	private final StatementService statementService;
 	private final CreditService creditService;
-	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final KafkaTemplate<String, EmailMessage> kafkaTemplate;
 
 	@Value("${services.calculator.offers-api}")
 	private String offersApi;
@@ -40,7 +42,7 @@ public class DealService {
 
 	public DealService(RestClient restClient, ClientService clientService,
 			StatementService statementService, CreditService creditService,
-			KafkaTemplate<String, String> kafkaTemplate) {
+			KafkaTemplate<String, EmailMessage> kafkaTemplate) {
 		this.restClient = restClient;
 		this.clientService = clientService;
 		this.statementService = statementService;
@@ -127,7 +129,10 @@ public class DealService {
 
 		var clientEmail = statement.getClient().getEmail();
 
-		kafkaTemplate.send("finish-registration", clientEmail);
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
+				"Завершите оформление");
+
+		kafkaTemplate.send("finish-registration", emailMessage);
 
 		log.debug("Statement updated in DB: {}", statement);
 	}
@@ -171,6 +176,13 @@ public class DealService {
 
 		var creditDto = calculateCredit(scoringData);
 		processRegistration(creditDto, statement);
+
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(),
+				EmailTheme.REGISTRATION_DOCUMENTS, "Перейти к оформлению документов");
+
+		kafkaTemplate.send("finish-registration", emailMessage);
 	}
 
 	/*
@@ -178,6 +190,47 @@ public class DealService {
 	 */
 	private CreditDto calculateCredit(ScoringDataDto scoringData) {
 		return restClient.post().uri(calcApi).body(scoringData).retrieve().body(CreditDto.class);
+	}
+
+	public void sendDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
+				"Документы созданы");
+
+		kafkaTemplate.send("send-documents", emailMessage);
+	}
+
+	public void signDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
+				"Ссылка на подписание документов и код ПЭП");
+
+		kafkaTemplate.send("send-ses", emailMessage);
+	}
+
+	public void codeDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
+				"Кредит одобрен");
+
+		kafkaTemplate.send("credit-issued", emailMessage);
+	}
+
+	private EmailMessage createEmailMessage(String email, UUID statementId, EmailTheme emailTheme, String text) {
+
+		EmailMessage emailMessage = new EmailMessage();
+		emailMessage.setAddress(email);
+		emailMessage.setTheme(emailTheme);
+		emailMessage.setText(text);
+		emailMessage.setStatementId(statementId.toString());
+
+		return emailMessage;
 	}
 
 	/*

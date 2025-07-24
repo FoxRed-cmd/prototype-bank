@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
 @RestController
 @RequestMapping("/deal")
 @RequiredArgsConstructor
@@ -37,6 +36,19 @@ public class DealController {
         dealService.finishRegistration(statementId, requestRegistration);
     }
 
+    @PostMapping("/document/{statementId}/send")
+    public void sendDocuments(@PathVariable String statementId) {
+        dealService.sendDocuments(statementId);
+    }
 
+    @PostMapping("/document/{statementId}/sign")
+    public void signDocuments(@PathVariable String statementId) {
+        dealService.sendDocuments(statementId);
+    }
+
+    @PostMapping("/document/{statementId}/code")
+    public void codeDocuments(@PathVariable String statementId) {
+        dealService.sendDocuments(statementId);
+    }
 
 }

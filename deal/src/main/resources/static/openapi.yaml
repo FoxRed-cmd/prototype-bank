@@ -60,6 +60,48 @@ paths:
             responses:
                 "200":
                     description: OK
+    "/deal/document/{statementId}/send":
+        post:
+            tags:
+                - deal-controller
+            operationId: sendDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: OK
+    "/deal/document/{statementId}/sign":
+        post:
+            tags:
+                - deal-controller
+            operationId: signDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: OK
+    "/deal/document/{statementId}/code":
+        post:
+            tags:
+                - deal-controller
+            operationId: codeDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: OK
 components:
     schemas:
         LoanStatementRequestDto:
@@ -265,8 +307,7 @@ components:
                 theme:
                     $ref: "#/components/schemas/EmailTheme"
                 statementId:
-                    type: number
-                    format: int64
+                    type: string
                 text:
                     type: string
 
@@ -304,4 +345,11 @@ components:
             enum: [AUTOMATIC, MANUAL]
         EmailTheme:
             type: string
-            enum: [FINISH_REGISTRATION]
+            enum:
+                [
+                    FINISH_REGISTRATION,
+                    REGISTRATION_DOCUMENTS,
+                    DOCUMENT_CREATED,
+                    SIGN_DOCUMENTS,
+                    CREDIT_ISSUED,
+                ]
