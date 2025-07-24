@@ -23,12 +23,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
+import neo.study.deal.dto.EmailMessage;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
@@ -40,167 +42,177 @@ import neo.study.deal.entity.Statement;
 
 @ExtendWith(MockitoExtension.class)
 public class DealServiceTest {
-        @Mock
-        private RestClient restClient;
-        @Mock
-        private RestClient.RequestBodyUriSpec uriSpec;
-        @Mock
-        private RestClient.RequestBodySpec bodySpec;
-        @Mock
-        private RestClient.RequestBodyUriSpec requestSpec;
-        @Mock
-        private RestClient.ResponseSpec responseSpec;
+	@Mock
+	private RestClient restClient;
+	@Mock
+	private RestClient.RequestBodyUriSpec uriSpec;
+	@Mock
+	private RestClient.RequestBodySpec bodySpec;
+	@Mock
+	private RestClient.RequestBodyUriSpec requestSpec;
+	@Mock
+	private RestClient.ResponseSpec responseSpec;
 
-        @Mock
-        private ClientService clientService;
-        @Mock
-        private StatementService statementService;
-        @Mock
-        private CreditService creditService;
+	@Mock
+	private ClientService clientService;
+	@Mock
+	private StatementService statementService;
+	@Mock
+	private CreditService creditService;
+	@Mock
+	private KafkaTemplate<String, EmailMessage> kafkaTemplate;
 
-        @InjectMocks
-        private DealService dealService;
+	@InjectMocks
+	private DealService dealService;
 
-        @BeforeEach
-        void setup() {
-                ReflectionTestUtils.setField(dealService, "offersApi", "/calculator/offers");
-                ReflectionTestUtils.setField(dealService, "calcApi", "/calculator/calc");
-        }
+	@BeforeEach
+	void setup() {
+		ReflectionTestUtils.setField(dealService, "offersApi", "/calculator/offers");
+		ReflectionTestUtils.setField(dealService, "calcApi", "/calculator/calc");
+	}
 
-        @SuppressWarnings("unchecked")
-        @Test
-        void testStatementProcessing_Success() {
-                var request = new LoanStatementRequestDto();
-                var offer = new LoanOfferDto();
-                offer.setTerm(12);
-                var offerList = List.of(offer);
+	@SuppressWarnings("unchecked")
+	@Test
+	void testStatementProcessing_Success() {
+		var request = new LoanStatementRequestDto();
+		var offer = new LoanOfferDto();
+		offer.setTerm(12);
+		var offerList = List.of(offer);
 
-                var client = new Client();
-                var statement = new Statement();
-                statement.setId(UUID.randomUUID());
+		var client = new Client();
+		var statement = new Statement();
+		statement.setId(UUID.randomUUID());
 
-                Mockito.when(restClient.post()).thenReturn(uriSpec);
-                Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
-                Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
-                Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
-                Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class)))
-                                .thenReturn(offerList);
+		Mockito.when(restClient.post()).thenReturn(uriSpec);
+		Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
+		Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
+		Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
+		Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class)))
+				.thenReturn(offerList);
 
-                Mockito.when(clientService.create(request)).thenReturn(client);
-                Mockito.when(statementService.create(client)).thenReturn(statement);
+		Mockito.when(clientService.create(request)).thenReturn(client);
+		Mockito.when(statementService.create(client)).thenReturn(statement);
 
-                var result = dealService.statementProcessing(request);
+		var result = dealService.statementProcessing(request);
 
-                assertNotNull(result);
-                assertEquals(1, result.size());
-                assertEquals(statement.getId(), result.get(0).getStatementId());
-        }
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(statement.getId(), result.get(0).getStatementId());
+	}
 
-        @Test
-        void testStatementProcessing_NotSuccess() {
-                var request = new LoanStatementRequestDto();
+	@SuppressWarnings("unchecked")
+	@Test
+	void testStatementProcessing_NotSuccess() {
+		var request = new LoanStatementRequestDto();
 
-                Mockito.when(restClient.post()).thenReturn(uriSpec);
-                Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
-                Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
-                Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
+		Mockito.when(restClient.post()).thenReturn(uriSpec);
+		Mockito.when(uriSpec.uri("/calculator/offers")).thenReturn(bodySpec);
+		Mockito.when(bodySpec.body(request)).thenReturn(bodySpec);
+		Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
 
-                Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class)))
-                                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid request"));
+		Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class)))
+				.thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid request"));
 
-                HttpClientErrorException exception = assertThrows(
-                                HttpClientErrorException.class,
-                                () -> dealService.statementProcessing(request));
+		HttpClientErrorException exception = assertThrows(
+				HttpClientErrorException.class,
+				() -> dealService.statementProcessing(request));
 
-                // Дополнительные проверки на исключение
-                assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-                assertEquals("Invalid request", exception.getStatusText());
-        }
+		// Дополнительные проверки на исключение
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+		assertEquals("Invalid request", exception.getStatusText());
+	}
 
-        @Test
-        void testSelectOffer() {
-                var offer = new LoanOfferDto();
-                var statementId = UUID.randomUUID();
-                offer.setStatementId(statementId);
+	@Test
+	void testSelectOffer() {
+		var offer = new LoanOfferDto();
+		var statementId = UUID.randomUUID();
+		offer.setStatementId(statementId);
 
-                var statement = new Statement();
-                Mockito.when(statementService.getById(statementId)).thenReturn(statement);
-                Mockito.when(statementService.updateStatus(statement, ApplicationStatus.APPROVED,
-                                ChangeType.AUTOMATIC)).thenReturn(statement);
+		var statement = new Statement();
+		statement.setId(statementId);
+		var client = new Client();
+		client.setEmail("test@example.com");
+		statement.setClient(client);
 
-                dealService.selectOffer(offer);
+		Mockito.when(statementService.getById(statementId)).thenReturn(statement);
+		Mockito.when(statementService.updateStatus(statement, ApplicationStatus.APPROVED,
+				ChangeType.AUTOMATIC)).thenReturn(statement);
 
-                Mockito.verify(statementService).getById(statementId);
-                Mockito.verify(statementService).updateStatus(statement, ApplicationStatus.APPROVED,
-                                ChangeType.AUTOMATIC);
-        }
+		dealService.selectOffer(offer);
 
-        @Test
-        void testFinishRegistration_Success() {
-                var statementId = UUID.randomUUID();
-                var request = new FinishRegistrationRequestDto();
-                var appliedOffer = new LoanOfferDto();
-                appliedOffer.setRequestedAmount(BigDecimal.TEN);
-                appliedOffer.setTerm(6);
+		Mockito.verify(statementService).getById(statementId);
+		Mockito.verify(statementService).updateStatus(statement, ApplicationStatus.APPROVED,
+				ChangeType.AUTOMATIC);
+	}
 
-                var client = new Client();
-                client.setBirthDate(LocalDate.of(1990, 1, 1));
-                client.setFirstName("Иван");
-                client.setLastName("Иванов");
-                client.setMiddleName("Иванович");
+	@Test
+	void testFinishRegistration_Success() {
+		var statementId = UUID.randomUUID();
+		var request = new FinishRegistrationRequestDto();
+		var appliedOffer = new LoanOfferDto();
+		appliedOffer.setRequestedAmount(BigDecimal.TEN);
+		appliedOffer.setTerm(6);
 
-                var passport = new Passport(UUID.randomUUID(), "1234", "567890", null, null);
-                client.setPassport(passport);
+		var client = new Client();
+		client.setBirthDate(LocalDate.of(1990, 1, 1));
+		client.setFirstName("Иван");
+		client.setLastName("Иванов");
+		client.setMiddleName("Иванович");
+		client.setEmail("test@example.com");
 
-                var statement = new Statement();
-                statement.setClient(client);
-                statement.setAppliedOffer(appliedOffer);
+		var passport = new Passport(UUID.randomUUID(), "1234", "567890", null, null);
+		client.setPassport(passport);
 
-                var creditDto = new CreditDto();
+		var statement = new Statement();
+		statement.setId(statementId);
+		statement.setClient(client);
+		statement.setAppliedOffer(appliedOffer);
 
-                Mockito.when(statementService.getById(statementId)).thenReturn(statement);
-                Mockito.when(restClient.post()).thenReturn(uriSpec);
-                Mockito.when(uriSpec.uri("/calculator/calc")).thenReturn(bodySpec);
-                Mockito.when(bodySpec.body(Mockito.any(ScoringDataDto.class))).thenReturn(bodySpec);
-                Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
-                Mockito.when(responseSpec.body(CreditDto.class)).thenReturn(creditDto);
+		var creditDto = new CreditDto();
 
-                Mockito.when(creditService.create(creditDto)).thenReturn(new Credit());
-                Mockito.when(statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
-                                ChangeType.AUTOMATIC)).thenReturn(statement);
+		Mockito.when(statementService.getById(statementId)).thenReturn(statement);
+		Mockito.when(restClient.post()).thenReturn(uriSpec);
+		Mockito.when(uriSpec.uri("/calculator/calc")).thenReturn(bodySpec);
+		Mockito.when(bodySpec.body(Mockito.any(ScoringDataDto.class))).thenReturn(bodySpec);
+		Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
+		Mockito.when(responseSpec.body(CreditDto.class)).thenReturn(creditDto);
 
-                dealService.finishRegistration(statementId.toString(), request);
+		Mockito.when(creditService.create(creditDto)).thenReturn(new Credit());
+		Mockito.when(statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
+				ChangeType.AUTOMATIC)).thenReturn(statement);
 
-                Mockito.verify(creditService).create(creditDto);
-        }
+		dealService.finishRegistration(statementId.toString(), request);
 
-        @Test
-        void finishRegistration_calculationFails_updatesToDenied() {
-                String statementId = UUID.randomUUID().toString();
-                FinishRegistrationRequestDto request = new FinishRegistrationRequestDto();
-                Statement statement = mock(Statement.class);
-                Client client = new Client();
-                LoanOfferDto offer = new LoanOfferDto();
-                ScoringDataDto scoringData = new ScoringDataDto();
+		Mockito.verify(creditService).create(creditDto);
+	}
 
-                when(statementService.getById(UUID.fromString(statementId))).thenReturn(statement);
-                when(statement.getClient()).thenReturn(client);
-                when(statement.getAppliedOffer()).thenReturn(offer);
+	@Test
+	void finishRegistration_calculationFails_updatesToDenied() {
+		String statementId = UUID.randomUUID().toString();
+		FinishRegistrationRequestDto request = new FinishRegistrationRequestDto();
+		Statement statement = mock(Statement.class);
+		Client client = new Client();
+		LoanOfferDto offer = new LoanOfferDto();
+		ScoringDataDto scoringData = new ScoringDataDto();
 
-                DealService spyService = Mockito.spy(dealService);
-                doReturn(scoringData).when(spyService).fillScoringData(client, offer, request);
+		when(statementService.getById(UUID.fromString(statementId))).thenReturn(statement);
+		when(statement.getClient()).thenReturn(client);
+		when(statement.getAppliedOffer()).thenReturn(offer);
 
-                when(restClient.post()).thenReturn(requestSpec);
-                when(requestSpec.uri("/calculator/calc")).thenReturn(bodySpec);
-                when(bodySpec.body(scoringData)).thenReturn(bodySpec);
-                when(bodySpec.retrieve()).thenReturn(responseSpec);
-                when(responseSpec.body(CreditDto.class)).thenThrow(new RuntimeException("API failed"));
+		DealService spyService = Mockito.spy(dealService);
+		doReturn(scoringData).when(spyService).fillScoringData(client, offer, request);
 
-                RuntimeException thrown = assertThrows(RuntimeException.class,
-                                () -> spyService.finishRegistration(statementId, request));
+		when(restClient.post()).thenReturn(requestSpec);
+		when(requestSpec.uri("/calculator/calc")).thenReturn(bodySpec);
+		when(bodySpec.body(scoringData)).thenReturn(bodySpec);
+		when(bodySpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.body(CreditDto.class)).thenThrow(new RuntimeException("API failed"));
 
-                assertEquals("API failed", thrown.getMessage());
-                verify(creditService, never()).create(any());
-                verify(statementService, never()).updateStatus(any(), eq(ApplicationStatus.CC_APPROVED), any());
-        }
+		RuntimeException thrown = assertThrows(RuntimeException.class,
+				() -> spyService.finishRegistration(statementId, request));
+
+		assertEquals("API failed", thrown.getMessage());
+		verify(creditService, never()).create(any());
+		verify(statementService, never()).updateStatus(any(), eq(ApplicationStatus.CC_APPROVED), any());
+	}
 }

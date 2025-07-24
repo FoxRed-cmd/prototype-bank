@@ -5,7 +5,7 @@ spring:
         hibernate:
             ddl-auto: validate
     datasource:
-        url: ${URL_DB:jdbc:postgresql://localhost:5432/TEST}
+        url: ${URL_DB:jdbc:postgresql://localhost:5432/test}
         username: ${USER_DB:test}
         password: ${PASSWORD_DB:test}
         driver-class-name: org.postgresql.Driver
