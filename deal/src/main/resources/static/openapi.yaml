@@ -257,6 +257,19 @@ components:
                     items:
                         $ref: "#/components/schemas/PaymentScheduleElementDto"
 
+        EmailMessage:
+            type: object
+            properties:
+                address:
+                    type: string
+                theme:
+                    $ref: "#/components/schemas/EmailTheme"
+                statementId:
+                    type: number
+                    format: int64
+                text:
+                    type: string
+
         Gender:
             type: string
             enum: [MALE, FEMALE]
@@ -289,3 +302,6 @@ components:
         ChangeType:
             type: string
             enum: [AUTOMATIC, MANUAL]
+        EmailTheme:
+            type: string
+            enum: [FINISH_REGISTRATION]

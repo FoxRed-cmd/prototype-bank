@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -29,6 +30,7 @@ public class DealService {
 	private final ClientService clientService;
 	private final StatementService statementService;
 	private final CreditService creditService;
+	private final KafkaTemplate<String, String> kafkaTemplate;
 
 	@Value("${services.calculator.offers-api}")
 	private String offersApi;
@@ -37,11 +39,13 @@ public class DealService {
 	private String calcApi;
 
 	public DealService(RestClient restClient, ClientService clientService,
-			StatementService statementService, CreditService creditService) {
+			StatementService statementService, CreditService creditService,
+			KafkaTemplate<String, String> kafkaTemplate) {
 		this.restClient = restClient;
 		this.clientService = clientService;
 		this.statementService = statementService;
 		this.creditService = creditService;
+		this.kafkaTemplate = kafkaTemplate;
 	}
 
 	/*
@@ -120,6 +124,10 @@ public class DealService {
 
 		statement = statementService.updateStatus(statement, ApplicationStatus.APPROVED,
 				ChangeType.AUTOMATIC);
+
+		var clientEmail = statement.getClient().getEmail();
+
+		kafkaTemplate.send("finish-registration", clientEmail);
 
 		log.debug("Statement updated in DB: {}", statement);
 	}
