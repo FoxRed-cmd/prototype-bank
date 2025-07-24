@@ -13,5 +13,12 @@ spring:
                     json:
                         trusted:
                             packages: "*"
+    mail:
+        username: ${MAIL_USERNAME}
+        password: ${MAIL_PASSWORD}
+        host: smtp.yandex.ru
+        port: 465
+        protocol: smtps
+        test-connection: true
 server:
     port: 8083

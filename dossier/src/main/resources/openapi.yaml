@@ -18,4 +18,11 @@ components:
 
         EmailTheme:
             type: string
-            enum: [FINISH_REGISTRATION]
+            enum:
+                [
+                    FINISH_REGISTRATION,
+                    REGISTRATION_DOCUMENTS,
+                    DOCUMENT_CREATED,
+                    SIGN_DOCUMENTS,
+                    CREDIT_ISSUED,
+                ]

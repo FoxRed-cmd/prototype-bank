@@ -43,12 +43,12 @@ public class DealController {
 
     @PostMapping("/document/{statementId}/sign")
     public void signDocuments(@PathVariable String statementId) {
-        dealService.sendDocuments(statementId);
+        dealService.signDocuments(statementId);
     }
 
     @PostMapping("/document/{statementId}/code")
     public void codeDocuments(@PathVariable String statementId) {
-        dealService.sendDocuments(statementId);
+        dealService.codeDocuments(statementId);
     }
 
 }
