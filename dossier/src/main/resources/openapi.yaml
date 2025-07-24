@@ -1,0 +1,21 @@
+openapi: 3.1.0
+info:
+    title: Dossier
+    version: 1.0.0
+components:
+    schemas:
+        EmailMessage:
+            type: object
+            properties:
+                address:
+                    type: string
+                theme:
+                    $ref: "#/components/schemas/EmailTheme"
+                statementId:
+                    type: string
+                text:
+                    type: string
+
+        EmailTheme:
+            type: string
+            enum: [FINISH_REGISTRATION]
