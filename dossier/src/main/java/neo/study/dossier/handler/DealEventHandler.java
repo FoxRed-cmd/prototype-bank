@@ -1,5 +1,7 @@
 package neo.study.dossier.handler;
 
+import java.util.Optional;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,7 @@ public class DealEventHandler {
     public void finishRegistrationHandler(EmailMessage emailMessage) {
         log.info("Received email message: {}", emailMessage);
 
-        mailSenderService.sendEmail(emailMessage.getAddress(), emailMessage.getTheme().name(),
+        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
                 emailMessage.getText());
     }
 
@@ -26,7 +28,7 @@ public class DealEventHandler {
     public void sendDocumentsHandler(EmailMessage emailMessage) {
         log.info("Received email message: {}", emailMessage);
 
-        mailSenderService.sendEmail(emailMessage.getAddress(), emailMessage.getTheme().name(),
+        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
                 emailMessage.getText());
     }
 
@@ -34,7 +36,7 @@ public class DealEventHandler {
     public void sendSESHandler(EmailMessage emailMessage) {
         log.info("Received email message: {}", emailMessage);
 
-        mailSenderService.sendEmail(emailMessage.getAddress(), emailMessage.getTheme().name(),
+        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
                 emailMessage.getText());
     }
 
@@ -42,7 +44,13 @@ public class DealEventHandler {
     public void creditIssuedHandler(EmailMessage emailMessage) {
         log.info("Received email message: {}", emailMessage);
 
-        mailSenderService.sendEmail(emailMessage.getAddress(), emailMessage.getTheme().name(),
+        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
                 emailMessage.getText());
+    }
+
+    private String getTheme(EmailMessage emailMessage) {
+        return Optional.ofNullable(emailMessage.getTheme())
+                .map(Enum::name)
+                .orElse("Default Subject");
     }
 }
