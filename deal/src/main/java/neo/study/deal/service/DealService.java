@@ -28,6 +28,12 @@ import neo.study.deal.entity.Statement;
 @Slf4j
 @Service
 public class DealService {
+	private static final String REGISTRATION_DOCUMENTS = "Перейти к оформлению документов";
+	private static final String DOCUMENT_CREATED = "Документы созданы";
+	private static final String FINISH_REGISTRATION = "Завершите оформление";
+	private static final String SIGN_DOCUMENTS = "Ссылка на подписание документов и код ПЭП";
+	private static final String CREDIT_ISSUED = "Кредит одобрен";
+
 	private final RestClient restClient;
 	private final ClientService clientService;
 	private final StatementService statementService;
@@ -130,7 +136,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
-				"Завершите оформление");
+				FINISH_REGISTRATION);
 
 		kafkaTemplate.send("finish-registration", emailMessage);
 
@@ -180,7 +186,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(),
-				EmailTheme.REGISTRATION_DOCUMENTS, "Перейти к оформлению документов");
+				EmailTheme.REGISTRATION_DOCUMENTS, REGISTRATION_DOCUMENTS);
 
 		kafkaTemplate.send("finish-registration", emailMessage);
 	}
@@ -197,7 +203,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
-				"Документы созданы");
+				DOCUMENT_CREATED);
 
 		kafkaTemplate.send("send-documents", emailMessage);
 	}
@@ -207,7 +213,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
-				"Ссылка на подписание документов и код ПЭП");
+				SIGN_DOCUMENTS);
 
 		kafkaTemplate.send("send-ses", emailMessage);
 	}
@@ -217,7 +223,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
-				"Кредит одобрен");
+				CREDIT_ISSUED);
 
 		kafkaTemplate.send("credit-issued", emailMessage);
 	}
