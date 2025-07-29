@@ -13,5 +13,95 @@
     "name": "services.calculator.calc-api",
     "type": "java.lang.String",
     "description": "A description for 'services.calculator.calc-api'"
+  },
+  {
+    "name": "spring.kafka.topics.finish-registration.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.finish-registration.name'"
+  },
+  {
+    "name": "spring.kafka.topics.finish-registration.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.finish-registration.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.finish-registration.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.finish-registration.replicas'"
+  },
+  {
+    "name": "spring.kafka.topics.create-documents.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.create-documents.name'"
+  },
+  {
+    "name": "spring.kafka.topics.create-documents.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.create-documents.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.create-documents.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.create-documents.replicas'"
+  },
+  {
+    "name": "spring.kafka.topics.send-documents.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-documents.name'"
+  },
+  {
+    "name": "spring.kafka.topics.send-documents.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-documents.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.send-documents.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-documents.replicas'"
+  },
+  {
+    "name": "spring.kafka.topics.send-ses.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-ses.name'"
+  },
+  {
+    "name": "spring.kafka.topics.send-ses.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-ses.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.send-ses.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.send-ses.replicas'"
+  },
+  {
+    "name": "spring.kafka.topics.credit-issued.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.credit-issued.name'"
+  },
+  {
+    "name": "spring.kafka.topics.credit-issued.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.credit-issued.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.credit-issued.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.credit-issued.replicas'"
+  },
+  {
+    "name": "spring.kafka.topics.statement-denied.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.statement-denied.name'"
+  },
+  {
+    "name": "spring.kafka.topics.statement-denied.partitions",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.statement-denied.partitions'"
+  },
+  {
+    "name": "spring.kafka.topics.statement-denied.replicas",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.kafka.topics.statement-denied.replicas'"
   }
 ]}

@@ -46,6 +46,24 @@ public class DealService {
 	@Value("${services.calculator.calc-api}")
 	private String calcApi;
 
+	@Value("${spring.kafka.topics.finish-registration.name}")
+	private String finishRegistrationTopic;
+
+	@Value("${spring.kafka.topics.create-documents.name}")
+	private String createDocumentsTopic;
+
+	@Value("${spring.kafka.topics.send-documents.name}")
+	private String sendDocumentsTopic;
+
+	@Value("${spring.kafka.topics.send-ses.name}")
+	private String sendSesTopic;
+
+	@Value("${spring.kafka.topics.credit-issued.name}")
+	private String creditIssuedTopic;
+
+	@Value("${spring.kafka.topics.statement-denied.name}")
+	private String statementDeniedTopic;
+
 	public DealService(RestClient restClient, ClientService clientService,
 			StatementService statementService, CreditService creditService,
 			KafkaTemplate<String, EmailMessage> kafkaTemplate) {
@@ -138,7 +156,7 @@ public class DealService {
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
 				FINISH_REGISTRATION);
 
-		kafkaTemplate.send("finish-registration", emailMessage);
+		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 
 		log.debug("Statement updated in DB: {}", statement);
 	}
@@ -188,7 +206,7 @@ public class DealService {
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(),
 				EmailTheme.REGISTRATION_DOCUMENTS, REGISTRATION_DOCUMENTS);
 
-		kafkaTemplate.send("finish-registration", emailMessage);
+		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 	}
 
 	/*
@@ -205,7 +223,7 @@ public class DealService {
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
 				DOCUMENT_CREATED);
 
-		kafkaTemplate.send("send-documents", emailMessage);
+		kafkaTemplate.send(sendDocumentsTopic, emailMessage);
 	}
 
 	public void signDocuments(String statementId) {
@@ -215,7 +233,7 @@ public class DealService {
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
 				SIGN_DOCUMENTS);
 
-		kafkaTemplate.send("send-ses", emailMessage);
+		kafkaTemplate.send(sendSesTopic, emailMessage);
 	}
 
 	public void codeDocuments(String statementId) {
@@ -225,7 +243,7 @@ public class DealService {
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
 				CREDIT_ISSUED);
 
-		kafkaTemplate.send("credit-issued", emailMessage);
+		kafkaTemplate.send(creditIssuedTopic, emailMessage);
 	}
 
 	private EmailMessage createEmailMessage(String email, UUID statementId, EmailTheme emailTheme, String text) {

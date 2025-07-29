@@ -1,58 +1,29 @@
 package neo.study.deal.config;
 
+import java.util.List;
+
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor
 public class KafkaTopicConfig {
+    private final KafkaTopicProperties topicProperties;
 
     @Bean
-    NewTopic finishRegistration() {
-        return TopicBuilder.name("finish-registration")
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic createDocuments() {
-        return TopicBuilder.name("create-documents")
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic sendDocuments() {
-        return TopicBuilder.name("send-documents")
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic sendSes() {
-        return TopicBuilder.name("send-ses")
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic creditIssued() {
-        return TopicBuilder.name("credit-issued")
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic statementDenied() {
-        return TopicBuilder.name("statement-denied")
-                .partitions(3)
-                .replicas(1)
-                .build();
+    List<NewTopic> kafkaTopics() {
+        return topicProperties.getTopics()
+                .values()
+                .stream()
+                .map(t -> TopicBuilder
+                        .name(t.name())
+                        .partitions(t.partitions())
+                        .replicas(t.replicas())
+                        .build())
+                .toList();
     }
 }

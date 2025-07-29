@@ -16,32 +16,8 @@ import neo.study.dossier.service.MailSenderService;
 public class DealEventHandler {
     private final MailSenderService mailSenderService;
 
-    @KafkaListener(topics = "finish-registration")
+    @KafkaListener(topics = { "finish-registration", "send-documents", "send-ses", "credit-issued" })
     public void finishRegistrationHandler(EmailMessage emailMessage) {
-        log.info("Received email message: {}", emailMessage);
-
-        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
-                emailMessage.getText());
-    }
-
-    @KafkaListener(topics = "send-documents")
-    public void sendDocumentsHandler(EmailMessage emailMessage) {
-        log.info("Received email message: {}", emailMessage);
-
-        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
-                emailMessage.getText());
-    }
-
-    @KafkaListener(topics = "send-ses")
-    public void sendSESHandler(EmailMessage emailMessage) {
-        log.info("Received email message: {}", emailMessage);
-
-        mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),
-                emailMessage.getText());
-    }
-
-    @KafkaListener(topics = "credit-issued")
-    public void creditIssuedHandler(EmailMessage emailMessage) {
         log.info("Received email message: {}", emailMessage);
 
         mailSenderService.sendEmail(emailMessage.getAddress(), getTheme(emailMessage),

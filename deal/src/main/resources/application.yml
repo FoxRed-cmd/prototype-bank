@@ -17,6 +17,31 @@ spring:
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        topics:
+            finish-registration:
+                name: finish-registration
+                partitions: 3
+                replicas: 1
+            create-documents:
+                name: create-documents
+                partitions: 3
+                replicas: 1
+            send-documents:
+                name: send-documents
+                partitions: 3
+                replicas: 1
+            send-ses:
+                name: send-ses
+                partitions: 3
+                replicas: 1
+            credit-issued:
+                name: credit-issued
+                partitions: 3
+                replicas: 1
+            statement-denied:
+                name: statement-denied
+                partitions: 3
+                replicas: 1
 springdoc:
     swagger-ui:
         url: /openapi.yaml
