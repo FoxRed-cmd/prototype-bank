@@ -13,7 +13,7 @@ spring:
         enabled: true
         change-log: classpath:db/changelog/db.changelog-master.xml
     kafka:
-        bootstrap-servers: localhost:29092
+        bootstrap-servers: ${KAFKA_SERVERS:localhost:29092}
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
