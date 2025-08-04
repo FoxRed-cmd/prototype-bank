@@ -1,14 +1,8 @@
 # prototype-bank
 
-## 🔧 Technologies
-
--   **Java:** 21 (Oracle JDK)
--   **Maven:** 3.9.9
--   **Maven Wrapper:** 3.3.2
--   **Spring Boot:** 3.x
--   **Lombok:** для генерации шаблонного кода
--   **Openapi generator maven plugin:** генерация моделей из спецификации openapi.yaml
--   **Liquibase:** миграции
+![Static Badge](https://img.shields.io/badge/Spring%20Boot-3.4.x-green?logo=spring&logoColor=green)
+![Static Badge](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=orange)
+![Static Badge](https://img.shields.io/badge/Maven-3.9.9-blue?logo=apache&logoColor=blue)
 
 ## 🚀 Startup
 
@@ -42,13 +36,19 @@ mvn -v
 cd prototype-bank
 ```
 
-### 2. Launch of the calculator service
+### 2. Run Kafka use docker-compose
+
+```Shell
+docker compose up -d --build
+```
+
+### 3. Launch of the calculator service
 
 ```Shell
 mvn -f .\calculator\pom.xml spring-boot:run
 ```
 
-### 3. Launch of the deal service
+### 4. Launch of the deal service
 
 ```Shell
 ${env:URL_DB}='YOUR DB URL'; ${env:USER_DB}='YOUR USERNAME'; ${env:PASSWORD_DB}='YOUR STRONG PASSWORD'; mvn -f .\deal\pom.xml spring-boot:run
@@ -71,16 +71,22 @@ spring:
 mvn -f .\deal\pom.xml spring-boot:run
 ```
 
-### 4. Launch of the statement service
+### 5. Launch of the statement service
 
 ```Shell
 mvn -f .\statement\pom.xml spring-boot:run
 ```
 
+### 6. Launch of the dossier service
+
+```Shell
+${env:MAIL_USERNAME}='YOUR_EMAIL'; ${env:MAIL_PASSWORD}='YOUR_APP_PASSWORD';  mvn -f .\dossier\pom.xml spring-boot:run
+```
+
 ### Run all services in the background
 
 ```Shell
-mvn -f .\calculator\pom.xml spring-boot:run & mvn -f .\statement\pom.xml spring-boot:run & ${env:URL_DB}='YOUR DB URL'; ${env:USER_DB}='YOUR USERNAME'; ${env:PASSWORD_DB}='YOUR STRONG PASSWORD'; mvn -f .\deal\pom.xml spring-boot:run
+mvn -f .\calculator\pom.xml spring-boot:run & mvn -f .\statement\pom.xml spring-boot:run & ${env:URL_DB}='YOUR DB URL'; ${env:USER_DB}='YOUR USERNAME'; ${env:PASSWORD_DB}='YOUR STRONG PASSWORD'; mvn -f .\deal\pom.xml spring-boot:run & ${env:MAIL_USERNAME}='YOUR_EMAIL'; ${env:MAIL_PASSWORD}='YOUR_APP_PASSWORD'; mvn -f .\dossier\pom.xml spring-boot:run
 ```
 
 ## 📗 SwaggerUI

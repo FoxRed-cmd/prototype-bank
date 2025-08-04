@@ -5,13 +5,43 @@ spring:
         hibernate:
             ddl-auto: validate
     datasource:
-        url: ${URL_DB:jdbc:postgresql://localhost:5432/TEST}
+        url: ${URL_DB:jdbc:postgresql://localhost:5432/test}
         username: ${USER_DB:test}
         password: ${PASSWORD_DB:test}
         driver-class-name: org.postgresql.Driver
     liquibase:
         enabled: true
         change-log: classpath:db/changelog/db.changelog-master.xml
+    kafka:
+        bootstrap-servers: ${KAFKA_SERVERS:localhost:29092}
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        topics:
+            finish-registration:
+                name: finish-registration
+                partitions: 3
+                replicas: 1
+            create-documents:
+                name: create-documents
+                partitions: 3
+                replicas: 1
+            send-documents:
+                name: send-documents
+                partitions: 3
+                replicas: 1
+            send-ses:
+                name: send-ses
+                partitions: 3
+                replicas: 1
+            credit-issued:
+                name: credit-issued
+                partitions: 3
+                replicas: 1
+            statement-denied:
+                name: statement-denied
+                partitions: 3
+                replicas: 1
 springdoc:
     swagger-ui:
         url: /openapi.yaml

@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -15,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
+import neo.study.deal.dto.EmailMessage;
+import neo.study.deal.dto.EmailTheme;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
@@ -25,10 +28,17 @@ import neo.study.deal.entity.Statement;
 @Slf4j
 @Service
 public class DealService {
+	private static final String REGISTRATION_DOCUMENTS = "Перейти к оформлению документов";
+	private static final String DOCUMENT_CREATED = "Документы созданы";
+	private static final String FINISH_REGISTRATION = "Завершите оформление";
+	private static final String SIGN_DOCUMENTS = "Ссылка на подписание документов и код ПЭП";
+	private static final String CREDIT_ISSUED = "Кредит одобрен";
+
 	private final RestClient restClient;
 	private final ClientService clientService;
 	private final StatementService statementService;
 	private final CreditService creditService;
+	private final KafkaTemplate<String, EmailMessage> kafkaTemplate;
 
 	@Value("${services.calculator.offers-api}")
 	private String offersApi;
@@ -36,12 +46,32 @@ public class DealService {
 	@Value("${services.calculator.calc-api}")
 	private String calcApi;
 
+	@Value("${spring.kafka.topics.finish-registration.name}")
+	private String finishRegistrationTopic;
+
+	@Value("${spring.kafka.topics.create-documents.name}")
+	private String createDocumentsTopic;
+
+	@Value("${spring.kafka.topics.send-documents.name}")
+	private String sendDocumentsTopic;
+
+	@Value("${spring.kafka.topics.send-ses.name}")
+	private String sendSesTopic;
+
+	@Value("${spring.kafka.topics.credit-issued.name}")
+	private String creditIssuedTopic;
+
+	@Value("${spring.kafka.topics.statement-denied.name}")
+	private String statementDeniedTopic;
+
 	public DealService(RestClient restClient, ClientService clientService,
-			StatementService statementService, CreditService creditService) {
+			StatementService statementService, CreditService creditService,
+			KafkaTemplate<String, EmailMessage> kafkaTemplate) {
 		this.restClient = restClient;
 		this.clientService = clientService;
 		this.statementService = statementService;
 		this.creditService = creditService;
+		this.kafkaTemplate = kafkaTemplate;
 	}
 
 	/*
@@ -121,6 +151,13 @@ public class DealService {
 		statement = statementService.updateStatus(statement, ApplicationStatus.APPROVED,
 				ChangeType.AUTOMATIC);
 
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
+				FINISH_REGISTRATION);
+
+		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
+
 		log.debug("Statement updated in DB: {}", statement);
 	}
 
@@ -163,6 +200,13 @@ public class DealService {
 
 		var creditDto = calculateCredit(scoringData);
 		processRegistration(creditDto, statement);
+
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(),
+				EmailTheme.REGISTRATION_DOCUMENTS, REGISTRATION_DOCUMENTS);
+
+		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 	}
 
 	/*
@@ -170,6 +214,47 @@ public class DealService {
 	 */
 	private CreditDto calculateCredit(ScoringDataDto scoringData) {
 		return restClient.post().uri(calcApi).body(scoringData).retrieve().body(CreditDto.class);
+	}
+
+	public void sendDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
+				DOCUMENT_CREATED);
+
+		kafkaTemplate.send(sendDocumentsTopic, emailMessage);
+	}
+
+	public void signDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
+				SIGN_DOCUMENTS);
+
+		kafkaTemplate.send(sendSesTopic, emailMessage);
+	}
+
+	public void codeDocuments(String statementId) {
+		var statement = statementService.getById(UUID.fromString(statementId));
+		var clientEmail = statement.getClient().getEmail();
+
+		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
+				CREDIT_ISSUED);
+
+		kafkaTemplate.send(creditIssuedTopic, emailMessage);
+	}
+
+	private EmailMessage createEmailMessage(String email, UUID statementId, EmailTheme emailTheme, String text) {
+
+		EmailMessage emailMessage = new EmailMessage();
+		emailMessage.setAddress(email);
+		emailMessage.setTheme(emailTheme);
+		emailMessage.setText(text);
+		emailMessage.setStatementId(statementId.toString());
+
+		return emailMessage;
 	}
 
 	/*
