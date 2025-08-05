@@ -226,6 +226,14 @@ public class DealService {
 		return restClient.post().uri(calcApi).body(scoringData).retrieve().body(CreditDto.class);
 	}
 
+	/*
+	 * Запрос на отправку документов
+	 *
+	 * Обновляет статус заявки на PREPARE_DOCUMENTS
+	 * и отправляет сообщение в Kafka
+	 *
+	 * После успешной отправки документов обновляет статус на DOCUMENT_CREATED
+	 */
 	@Transactional
 	public void sendDocuments(String statementId) {
 		var statement = statementService.updateStatusById(UUID.fromString(statementId),
@@ -247,8 +255,16 @@ public class DealService {
 			statementService.updateStatusById(UUID.fromString(statementId), ApplicationStatus.DOCUMENT_CREATED,
 					ChangeType.AUTOMATIC);
 		});
+
+		log.debug("Statement updated in DB: {}", statement);
 	}
 
+	/*
+	 * Запрос на подписание документов
+	 *
+	 * Обновляет статус заявки на DOCUMENT_SIGNED
+	 * и отправляет сообщение в Kafka
+	 */
 	@Transactional
 	public void signDocuments(String statementId) {
 		var statement = statementService.updateStatusById(UUID.fromString(statementId),
@@ -260,8 +276,16 @@ public class DealService {
 				SIGN_DOCUMENTS);
 
 		kafkaTemplate.send(sendSesTopic, emailMessage);
+
+		log.debug("Statement updated in DB: {}", statement);
 	}
 
+	/*
+	 * Запрос на выдачу кредита
+	 *
+	 * Обновляет статус заявки на CREDIT_ISSUED, статус кредита на ISSUED, добавляет
+	 * дату подписания и отправляет сообщение в Kafka
+	 */
 	@Transactional
 	public void codeDocuments(String statementId) {
 		var statement = statementService.updateStatusById(UUID.fromString(statementId),
@@ -281,18 +305,30 @@ public class DealService {
 				CREDIT_ISSUED);
 
 		kafkaTemplate.send(creditIssuedTopic, emailMessage);
+
+		log.debug("Statement updated in DB: {}", statement);
+		log.debug("Credit updated in DB: {}", credit);
 	}
 
+	/*
+	 * Получение заявки
+	 */
 	public StatementDto getStatement(String statementId) {
 		return StatementMapper.toDto(statementService.getById(UUID.fromString(statementId)));
 	}
 
+	/*
+	 * Обновление статуса заявки
+	 */
 	@Transactional
 	public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
 		return StatementMapper
 				.toDto(statementService.updateStatusById(UUID.fromString(statementId), status, ChangeType.MANUAL));
 	}
 
+	/*
+	 * Создание EmailMessage
+	 */
 	private EmailMessage createEmailMessage(String email, UUID statementId, EmailTheme emailTheme, String text) {
 
 		EmailMessage emailMessage = new EmailMessage();
@@ -364,6 +400,9 @@ public class DealService {
 		return scoringData;
 	}
 
+	/*
+	 * Метод насыщения Client данными из FinishRegistrationRequestDto
+	 */
 	private Client fillClientData(Client client, FinishRegistrationRequestDto requestRegistration) {
 		client.setGender(requestRegistration.getGender());
 		client.setMaritalStatus(requestRegistration.getMaritalStatus());
