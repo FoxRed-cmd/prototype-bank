@@ -53,7 +53,7 @@ public class StatementServiceTest {
         Mockito.when(bodySpec.retrieve()).thenReturn(responseSpec);
         Mockito.when(responseSpec.body(Mockito.any(ParameterizedTypeReference.class))).thenReturn(offers);
 
-        List<LoanOfferDto> result = statementService.statementProcessing(request);
+        List<LoanOfferDto> result = statementService.processStatement(request);
 
         assertEquals(4, result.size());
     }
@@ -70,7 +70,7 @@ public class StatementServiceTest {
 
         HttpClientErrorException ex = assertThrows(
                 HttpClientErrorException.class,
-                () -> statementService.statementProcessing(request));
+                () -> statementService.processStatement(request));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }

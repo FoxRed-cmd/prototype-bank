@@ -11,12 +11,14 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import neo.study.gateway.dto.ApplicationStatus;
 import neo.study.gateway.dto.FinishRegistrationRequestDto;
 import neo.study.gateway.dto.LoanOfferDto;
 import neo.study.gateway.dto.LoanStatementRequestDto;
 import neo.study.gateway.dto.StatementDto;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GatewayService {
@@ -49,13 +51,18 @@ public class GatewayService {
     private final RestClient restClientToDeal;
 
     public List<LoanOfferDto> processStatement(LoanStatementRequestDto requestDto) {
+        log.debug("Start processing statement with input data: {}", requestDto);
+
         var offers = Optional.ofNullable(getLoanOffers(requestDto))
                 .orElseThrow(() -> new HttpClientErrorException(HttpStatus.BAD_REQUEST,
                         "The service returned an empty list of offers"));
+
+        offers.forEach(offer -> log.debug("Offer: {}", offer));
         return offers;
     }
 
     public void selectOffer(LoanOfferDto selectedOffer) {
+        log.debug("Selected offer: {}", selectedOffer);
         restClientToStatement.post()
                 .uri(selectOfferApi)
                 .body(selectedOffer)
@@ -64,6 +71,7 @@ public class GatewayService {
     }
 
     public void completeRegistration(String statementId, FinishRegistrationRequestDto requestRegistration) {
+        log.debug("Complete registration for statement: {}", statementId);
         restClientToDeal.post()
                 .uri(completeRegistrationApi.replace("{statementId}", statementId))
                 .body(requestRegistration)
@@ -72,6 +80,7 @@ public class GatewayService {
     }
 
     public void sendDocuments(String statementId) {
+        log.debug("Send documents for statement: {}", statementId);
         restClientToDeal.post()
                 .uri(sendDocumentsApi.replace("{statementId}", statementId))
                 .retrieve()
@@ -79,6 +88,7 @@ public class GatewayService {
     }
 
     public void signDocuments(String statementId) {
+        log.debug("Sign documents for statement: {}", statementId);
         restClientToDeal.post()
                 .uri(signDocumentsApi.replace("{statementId}", statementId))
                 .retrieve()
@@ -86,6 +96,7 @@ public class GatewayService {
     }
 
     public void codeDocuments(String statementId) {
+        log.debug("Code documents for statement: {}", statementId);
         restClientToDeal.post()
                 .uri(codeDocumentsApi.replace("{statementId}", statementId))
                 .retrieve()
@@ -93,6 +104,7 @@ public class GatewayService {
     }
 
     public StatementDto getStatement(String statementId) {
+        log.debug("Get statement: {}", statementId);
         return restClientToDeal.get()
                 .uri(getStatementApi.replace("{statementId}", statementId))
                 .retrieve()
@@ -100,6 +112,7 @@ public class GatewayService {
     }
 
     public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
+        log.debug("Update status for statement: {}", statementId);
         return restClientToDeal.put()
                 .uri(updateStatementApi.replace("{statementId}", statementId))
                 .body(status)
