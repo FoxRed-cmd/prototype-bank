@@ -1,21 +1,27 @@
 package neo.study.deal.service;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import lombok.extern.slf4j.Slf4j;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
+import neo.study.deal.dto.CreditStatus;
 import neo.study.deal.dto.EmailMessage;
 import neo.study.deal.dto.EmailTheme;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
@@ -25,6 +31,7 @@ import neo.study.deal.dto.ScoringDataDto;
 import neo.study.deal.dto.StatementDto;
 import neo.study.deal.entity.Client;
 import neo.study.deal.entity.Statement;
+import neo.study.deal.utils.mapper.EmploymentMapper;
 import neo.study.deal.utils.mapper.StatementMapper;
 
 @Slf4j
@@ -187,7 +194,7 @@ public class DealService {
 	 *
 	 * Заявка сохраняется.
 	 */
-
+	@Transactional
 	public void finishRegistration(String statementId,
 			FinishRegistrationRequestDto requestRegistration) {
 		log.info("Finish registration for statement: {}", statementId);
@@ -203,9 +210,10 @@ public class DealService {
 		var creditDto = calculateCredit(scoringData);
 		processRegistration(creditDto, statement);
 
-		var clientEmail = statement.getClient().getEmail();
+		var client = fillClientData(statement.getClient(), requestRegistration);
+		client = clientService.update(client);
 
-		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(),
+		EmailMessage emailMessage = createEmailMessage(client.getEmail(), statement.getId(),
 				EmailTheme.REGISTRATION_DOCUMENTS, REGISTRATION_DOCUMENTS);
 
 		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
@@ -218,18 +226,34 @@ public class DealService {
 		return restClient.post().uri(calcApi).body(scoringData).retrieve().body(CreditDto.class);
 	}
 
+	@Transactional
 	public void sendDocuments(String statementId) {
-		var statement = statementService.getById(UUID.fromString(statementId));
+		var statement = statementService.updateStatusById(UUID.fromString(statementId),
+				ApplicationStatus.PREPARE_DOCUMENTS,
+				ChangeType.AUTOMATIC);
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
 				DOCUMENT_CREATED);
 
-		kafkaTemplate.send(sendDocumentsTopic, emailMessage);
+		CompletableFuture<SendResult<String, EmailMessage>> future = kafkaTemplate.send(sendDocumentsTopic,
+				emailMessage);
+
+		future.whenComplete((result, exception) -> {
+			if (exception != null) {
+				log.error("Error sending email: {}", exception.getMessage(), exception);
+				throw new ResourceAccessException(String.format("Error sending email: %s", exception.getMessage()));
+			}
+			statementService.updateStatusById(UUID.fromString(statementId), ApplicationStatus.DOCUMENT_CREATED,
+					ChangeType.AUTOMATIC);
+		});
 	}
 
+	@Transactional
 	public void signDocuments(String statementId) {
-		var statement = statementService.getById(UUID.fromString(statementId));
+		var statement = statementService.updateStatusById(UUID.fromString(statementId),
+				ApplicationStatus.DOCUMENT_SIGNED,
+				ChangeType.AUTOMATIC);
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
@@ -238,8 +262,19 @@ public class DealService {
 		kafkaTemplate.send(sendSesTopic, emailMessage);
 	}
 
+	@Transactional
 	public void codeDocuments(String statementId) {
-		var statement = statementService.getById(UUID.fromString(statementId));
+		var statement = statementService.updateStatusById(UUID.fromString(statementId),
+				ApplicationStatus.CREDIT_ISSUED,
+				ChangeType.AUTOMATIC);
+
+		var credit = statement.getCredit();
+		credit.setStatus(CreditStatus.ISSUED);
+
+		statement.setCredit(credit);
+		statement.setSignDate(LocalDate.now());
+		statement = statementService.update(statement);
+
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
@@ -252,6 +287,7 @@ public class DealService {
 		return StatementMapper.toDto(statementService.getById(UUID.fromString(statementId)));
 	}
 
+	@Transactional
 	public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
 		return StatementMapper
 				.toDto(statementService.updateStatusById(UUID.fromString(statementId), status, ChangeType.MANUAL));
@@ -279,6 +315,7 @@ public class DealService {
 
 		log.debug("Created credit in DB: {}", credit);
 
+		statement.setCredit(credit);
 		statement = statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
 				ChangeType.AUTOMATIC);
 
@@ -325,5 +362,21 @@ public class DealService {
 
 		log.debug("Filled scoring data: {}", scoringData);
 		return scoringData;
+	}
+
+	private Client fillClientData(Client client, FinishRegistrationRequestDto requestRegistration) {
+		client.setGender(requestRegistration.getGender());
+		client.setMaritalStatus(requestRegistration.getMaritalStatus());
+		client.setDependentAmount(requestRegistration.getDependentAmount());
+
+		var passport = client.getPassport();
+		passport.setIssueDate(requestRegistration.getPassportIssueDate());
+		passport.setIssueBranch(requestRegistration.getPassportIssueBranch());
+
+		client.setPassport(passport);
+		client.setEmployment(EmploymentMapper.toEntity(requestRegistration.getEmployment()));
+		client.setAccountNumber(requestRegistration.getAccountNumber());
+
+		return client;
 	}
 }

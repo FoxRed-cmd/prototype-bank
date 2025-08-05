@@ -42,6 +42,11 @@ public class StatementService {
         return statementRepository.save(statement);
     }
 
+    public Statement update(Statement statement) {
+        log.debug("Start updating statement: {}", statement);
+        return statementRepository.save(statement);
+    }
+
     /*
      * Обновление статуса заявки в базе данных
      */
