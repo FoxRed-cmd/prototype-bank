@@ -29,7 +29,7 @@ public class StatementService {
         this.restClient = restClient;
     }
 
-    public List<LoanOfferDto> statementProcessing(LoanStatementRequestDto request) {
+    public List<LoanOfferDto> processStatement(LoanStatementRequestDto request) {
         log.info("Starting statement processing for request: {}", request);
         List<LoanOfferDto> offers = Optional.ofNullable(getLoanOffers(request))
                 .orElseThrow(() -> new HttpClientErrorException(HttpStatus.BAD_REQUEST,

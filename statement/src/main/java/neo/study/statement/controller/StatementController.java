@@ -22,7 +22,7 @@ public class StatementController {
 
     @PostMapping
     public ResponseEntity<List<LoanOfferDto>> prescoring(@RequestBody LoanStatementRequestDto request) {
-        return ResponseEntity.ok(statementService.statementProcessing(request));
+        return ResponseEntity.ok(statementService.processStatement(request));
     }
 
     @PostMapping("/offer")
