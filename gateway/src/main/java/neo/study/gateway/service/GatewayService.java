@@ -11,9 +11,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import lombok.RequiredArgsConstructor;
+import neo.study.gateway.dto.ApplicationStatus;
 import neo.study.gateway.dto.FinishRegistrationRequestDto;
 import neo.study.gateway.dto.LoanOfferDto;
 import neo.study.gateway.dto.LoanStatementRequestDto;
+import neo.study.gateway.dto.StatementDto;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,12 @@ public class GatewayService {
 
     @Value("${services.deal.code-documents-api}")
     private String codeDocumentsApi;
+
+    @Value("${services.deal.get-statement-api}")
+    private String getStatementApi;
+
+    @Value("${services.deal.update-statement-api}")
+    private String updateStatementApi;
 
     private final RestClient restClientToStatement;
     private final RestClient restClientToDeal;
@@ -82,6 +90,21 @@ public class GatewayService {
                 .uri(codeDocumentsApi.replace("{statementId}", statementId))
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    public StatementDto getStatement(String statementId) {
+        return restClientToDeal.get()
+                .uri(getStatementApi.replace("{statementId}", statementId))
+                .retrieve()
+                .body(StatementDto.class);
+    }
+
+    public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
+        return restClientToDeal.put()
+                .uri(updateStatementApi.replace("{statementId}", statementId))
+                .body(status)
+                .retrieve()
+                .body(StatementDto.class);
     }
 
     private List<LoanOfferDto> getLoanOffers(LoanStatementRequestDto requestDto) {

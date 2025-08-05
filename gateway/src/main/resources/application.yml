@@ -13,7 +13,14 @@ services:
         send-documents-api: /deal/document/{statementId}/send
         sign-documents-api: /deal/document/{statementId}/sign
         code-documents-api: /deal/document/{statementId}/code
+        get-statement-api: /deal/admin/statement/{statementId}
+        update-statement-api: /deal/admin/statement/{statementId}/status
     statement:
         base-url: http://localhost:8082
         process-statement-api: /statement
         select-offer-api: /statement/offer
+logging:
+    pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    level:
+        root: INFO

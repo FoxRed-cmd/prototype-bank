@@ -38,5 +38,15 @@
     "name": "services.statement.select-offer-api",
     "type": "java.lang.String",
     "description": "A description for 'services.statement.select-offer-api'"
+  },
+  {
+    "name": "services.deal.get-statement-api",
+    "type": "java.lang.String",
+    "description": "A description for 'services.deal.get-statement-api'"
+  },
+  {
+    "name": "services.deal.update-statement-api",
+    "type": "java.lang.String",
+    "description": "A description for 'services.deal.update-statement-api'"
   }
 ]}

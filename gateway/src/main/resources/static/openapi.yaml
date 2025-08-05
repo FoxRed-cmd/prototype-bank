@@ -102,6 +102,49 @@ paths:
             responses:
                 200:
                     description: OK
+    "/deal/admin/statement/{statementId}/status":
+        put:
+            tags:
+                - gateway-controller
+            operationId: updateStatementStatus
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                description: "Application statuses: PREAPPROVAL, APPROVED, CC_DENIED, CC_APPROVED, PREPARE_DOCUMENTS, DOCUMENT_CREATED, CLIENT_DENIED, DOCUMENT_SIGNED, CREDIT_ISSUED"
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ApplicationStatus"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                $ref: "#/components/schemas/StatementDto"
+    "/deal/admin/statement/{statementId}":
+        get:
+            tags:
+                - gateway-controller
+            operationId: getStatement
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                $ref: "#/components/schemas/StatementDto"
 components:
     schemas:
         LoanStatementRequestDto:
@@ -205,6 +248,38 @@ components:
                     type: string
                     example: 12345678901234567890
 
+        StatementDto:
+            type: object
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                status:
+                    $ref: "#/components/schemas/ApplicationStatus"
+                creationDate:
+                    type: string
+                    format: date
+                appliedOffer:
+                    $ref: "#/components/schemas/LoanOfferDto"
+                signDate:
+                    type: string
+                    format: date
+                statusHistory:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/StatementStatusHistoryDto"
+
+        StatementStatusHistoryDto:
+            type: object
+            properties:
+                status:
+                    $ref: "#/components/schemas/ApplicationStatus"
+                time:
+                    type: string
+                    format: date-time
+                changeType:
+                    $ref: "#/components/schemas/ChangeType"
+
         Gender:
             type: string
             enum: [MALE, FEMALE]
@@ -217,3 +292,20 @@ components:
         Position:
             type: string
             enum: [MIDDLE_MANAGER, TOP_MANAGER]
+        ApplicationStatus:
+            type: string
+            enum:
+                [
+                    PREAPPROVAL,
+                    APPROVED,
+                    CC_DENIED,
+                    CC_APPROVED,
+                    PREPARE_DOCUMENTS,
+                    DOCUMENT_CREATED,
+                    CLIENT_DENIED,
+                    DOCUMENT_SIGNED,
+                    CREDIT_ISSUED,
+                ]
+        ChangeType:
+            type: string
+            enum: [AUTOMATIC, MANUAL]
