@@ -93,7 +93,7 @@ public class DealServiceTest {
 		Mockito.when(clientService.create(request)).thenReturn(client);
 		Mockito.when(statementService.create(client)).thenReturn(statement);
 
-		var result = dealService.statementProcessing(request);
+		var result = dealService.processStatement(request);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -115,7 +115,7 @@ public class DealServiceTest {
 
 		HttpClientErrorException exception = assertThrows(
 				HttpClientErrorException.class,
-				() -> dealService.statementProcessing(request));
+				() -> dealService.processStatement(request));
 
 		// Дополнительные проверки на исключение
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());

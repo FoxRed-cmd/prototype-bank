@@ -102,6 +102,49 @@ paths:
             responses:
                 "200":
                     description: OK
+    "/deal/admin/statement/{statementId}/status":
+        put:
+            tags:
+                - deal-controller
+            operationId: updateStatementStatus
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                description: "Application statuses: PREAPPROVAL, APPROVED, CC_DENIED, CC_APPROVED, PREPARE_DOCUMENTS, DOCUMENT_CREATED, CLIENT_DENIED, DOCUMENT_SIGNED, CREDIT_ISSUED"
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ApplicationStatus"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                $ref: "#/components/schemas/StatementDto"
+    "/deal/admin/statement/{statementId}":
+        get:
+            tags:
+                - deal-controller
+            operationId: getStatement
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                $ref: "#/components/schemas/StatementDto"
 components:
     schemas:
         LoanStatementRequestDto:
@@ -240,6 +283,27 @@ components:
                     type: number
                 remainingDebt:
                     type: number
+
+        StatementDto:
+            type: object
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                status:
+                    $ref: "#/components/schemas/ApplicationStatus"
+                creationDate:
+                    type: string
+                    format: date
+                appliedOffer:
+                    $ref: "#/components/schemas/LoanOfferDto"
+                signDate:
+                    type: string
+                    format: date
+                statusHistory:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/StatementStatusHistoryDto"
 
         StatementStatusHistoryDto:
             type: object

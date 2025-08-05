@@ -22,8 +22,10 @@ import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
 import neo.study.deal.dto.ScoringDataDto;
+import neo.study.deal.dto.StatementDto;
 import neo.study.deal.entity.Client;
 import neo.study.deal.entity.Statement;
+import neo.study.deal.utils.mapper.StatementMapper;
 
 @Slf4j
 @Service
@@ -94,7 +96,7 @@ public class DealService {
 	 * Ответ на API - список из 4х LoanOfferDto от "худшего" к "лучшему".
 	 */
 	@Transactional
-	public List<LoanOfferDto> statementProcessing(LoanStatementRequestDto request) {
+	public List<LoanOfferDto> processStatement(LoanStatementRequestDto request) {
 		log.info("Start processing statement with input data: {}", request);
 
 		var client = clientService.create(request);
@@ -244,6 +246,15 @@ public class DealService {
 				CREDIT_ISSUED);
 
 		kafkaTemplate.send(creditIssuedTopic, emailMessage);
+	}
+
+	public StatementDto getStatement(String statementId) {
+		return StatementMapper.toDto(statementService.getById(UUID.fromString(statementId)));
+	}
+
+	public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
+		return StatementMapper
+				.toDto(statementService.updateStatusById(UUID.fromString(statementId), status, ChangeType.MANUAL));
 	}
 
 	private EmailMessage createEmailMessage(String email, UUID statementId, EmailTheme emailTheme, String text) {
