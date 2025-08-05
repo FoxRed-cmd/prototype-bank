@@ -119,7 +119,7 @@
 				</executions>
 				<configuration>
 					<inputSpec>${project.basedir}/src/main/resources/static/openapi.yaml</inputSpec>
-					<modelPackage>neo.study.deal.dto</modelPackage>
+					<modelPackage>neo.study.gateway.dto</modelPackage>
 					<generatorName>java</generatorName>
 					<generateApiDocumentation>false</generateApiDocumentation>
 					<generateModelDocumentation>false</generateModelDocumentation>

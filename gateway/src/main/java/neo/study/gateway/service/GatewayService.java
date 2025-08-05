@@ -11,8 +11,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import lombok.RequiredArgsConstructor;
-import neo.study.deal.dto.LoanOfferDto;
-import neo.study.deal.dto.LoanStatementRequestDto;
+import neo.study.gateway.dto.FinishRegistrationRequestDto;
+import neo.study.gateway.dto.LoanOfferDto;
+import neo.study.gateway.dto.LoanStatementRequestDto;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,20 @@ public class GatewayService {
     @Value("${services.statement.select-offer-api}")
     private String selectOfferApi;
 
+    @Value("${services.deal.complete-registration-api}")
+    private String completeRegistrationApi;
+
+    @Value("${services.deal.send-documents-api}")
+    private String sendDocumentsApi;
+
+    @Value("${services.deal.sign-documents-api}")
+    private String signDocumentsApi;
+
+    @Value("${services.deal.code-documents-api}")
+    private String codeDocumentsApi;
+
     private final RestClient restClientToStatement;
+    private final RestClient restClientToDeal;
 
     public List<LoanOfferDto> processStatement(LoanStatementRequestDto requestDto) {
         var offers = Optional.ofNullable(getLoanOffers(requestDto))
@@ -34,11 +48,47 @@ public class GatewayService {
     }
 
     public void selectOffer(LoanOfferDto selectedOffer) {
-        restClientToStatement.post().uri(selectOfferApi).body(selectedOffer).retrieve().toBodilessEntity();
+        restClientToStatement.post()
+                .uri(selectOfferApi)
+                .body(selectedOffer)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void completeRegistration(String statementId, FinishRegistrationRequestDto requestRegistration) {
+        restClientToDeal.post()
+                .uri(completeRegistrationApi.replace("{statementId}", statementId))
+                .body(requestRegistration)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void sendDocuments(String statementId) {
+        restClientToDeal.post()
+                .uri(sendDocumentsApi.replace("{statementId}", statementId))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void signDocuments(String statementId) {
+        restClientToDeal.post()
+                .uri(signDocumentsApi.replace("{statementId}", statementId))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void codeDocuments(String statementId) {
+        restClientToDeal.post()
+                .uri(codeDocumentsApi.replace("{statementId}", statementId))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private List<LoanOfferDto> getLoanOffers(LoanStatementRequestDto requestDto) {
-        return restClientToStatement.post().uri(processStatementApi).body(requestDto).retrieve()
+        return restClientToStatement.post()
+                .uri(processStatementApi)
+                .body(requestDto)
+                .retrieve()
                 .body(new ParameterizedTypeReference<>() {
                 });
     }

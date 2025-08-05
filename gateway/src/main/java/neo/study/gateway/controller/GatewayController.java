@@ -3,9 +3,9 @@ package neo.study.gateway.controller;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import neo.study.deal.dto.FinishRegistrationRequestDto;
-import neo.study.deal.dto.LoanOfferDto;
-import neo.study.deal.dto.LoanStatementRequestDto;
+import neo.study.gateway.dto.FinishRegistrationRequestDto;
+import neo.study.gateway.dto.LoanOfferDto;
+import neo.study.gateway.dto.LoanStatementRequestDto;
 import neo.study.gateway.service.GatewayService;
 
 import java.util.List;
@@ -33,22 +33,22 @@ public class GatewayController {
     @PostMapping("/deal/calculate/{statementId}")
     public void completeRegistration(@PathVariable String statementId,
             @RequestBody FinishRegistrationRequestDto requestRegistration) {
-
+        gatewayService.completeRegistration(statementId, requestRegistration);
     }
 
     @PostMapping("/deal/document/{statementId}/send")
     public void sendDocuments(@PathVariable String statementId) {
-
+        gatewayService.sendDocuments(statementId);
     }
 
     @PostMapping("/deal/document/{statementId}/sign")
     public void signDocuments(@PathVariable String statementId) {
-
+        gatewayService.signDocuments(statementId);
     }
 
     @PostMapping("/deal/document/{statementId}/code")
     public void codeDocuments(@PathVariable String statementId) {
-
+        gatewayService.codeDocuments(statementId);
     }
 
 }
