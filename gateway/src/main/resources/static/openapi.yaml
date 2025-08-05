@@ -1,7 +1,107 @@
 openapi: 3.1.0
 info:
-    title: Deal API
+    title: Gateway API
     version: 1.0.0
+servers:
+    - url: http://localhost:8083
+      description: Generated server url
+paths:
+    /statement:
+        post:
+            tags:
+                - gateway-controller
+            operationId: processStatement
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanStatementRequestDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/LoanOfferDto"
+    /statement/offer:
+        post:
+            tags:
+                - gateway-controller
+            operationId: selectOffer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanOfferDto"
+                required: true
+            responses:
+                200:
+                    description: OK
+    /deal/document/{statementId}/sign:
+        post:
+            tags:
+                - gateway-controller
+            operationId: signDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/document/{statementId}/send:
+        post:
+            tags:
+                - gateway-controller
+            operationId: sendDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/document/{statementId}/code:
+        post:
+            tags:
+                - gateway-controller
+            operationId: codeDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/calculate/{statementId}:
+        post:
+            tags:
+                - gateway-controller
+            operationId: completeRegistration
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/FinishRegistrationRequestDto"
+                required: true
+            responses:
+                200:
+                    description: OK
 components:
     schemas:
         LoanStatementRequestDto:
@@ -58,3 +158,62 @@ components:
                     type: boolean
                 isSalaryClient:
                     type: boolean
+
+        EmploymentDto:
+            type: object
+            properties:
+                employmentStatus:
+                    $ref: "#/components/schemas/EmploymentStatus"
+                employerINN:
+                    type: string
+                    example: 123456789021
+                salary:
+                    type: number
+                    example: 43000
+                position:
+                    $ref: "#/components/schemas/Position"
+                workExperienceTotal:
+                    type: integer
+                    format: int32
+                    example: 24
+                workExperienceCurrent:
+                    type: integer
+                    format: int32
+                    example: 12
+
+        FinishRegistrationRequestDto:
+            type: object
+            properties:
+                gender:
+                    $ref: "#/components/schemas/Gender"
+                maritalStatus:
+                    $ref: "#/components/schemas/MaritalStatus"
+                dependentAmount:
+                    type: integer
+                    format: int32
+                    example: 1
+                passportIssueDate:
+                    type: string
+                    format: date
+                    example: 2010-01-01
+                passportIssueBranch:
+                    type: string
+                    example: УФМС г. Москвы
+                employment:
+                    $ref: "#/components/schemas/EmploymentDto"
+                accountNumber:
+                    type: string
+                    example: 12345678901234567890
+
+        Gender:
+            type: string
+            enum: [MALE, FEMALE]
+        MaritalStatus:
+            type: string
+            enum: [SINGLE, MARRIED, DIVORCED, WIDOWED]
+        EmploymentStatus:
+            type: string
+            enum: [EMPLOYED, UNEMPLOYED, SELF_EMPLOYED, BUSINESS_OWNER]
+        Position:
+            type: string
+            enum: [MIDDLE_MANAGER, TOP_MANAGER]
