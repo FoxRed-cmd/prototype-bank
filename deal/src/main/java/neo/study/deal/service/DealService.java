@@ -273,7 +273,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
-				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase() + getSESCode()));
+				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase()) + getSESCode());
 
 		kafkaTemplate.send(sendSesTopic, emailMessage);
 
