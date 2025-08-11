@@ -273,7 +273,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
-				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase()));
+				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase() + getSESCode()));
 
 		kafkaTemplate.send(sendSesTopic, emailMessage);
 
@@ -356,6 +356,12 @@ public class DealService {
 				ChangeType.AUTOMATIC);
 
 		log.debug("Updated statement in DB: {}", statement);
+	}
+
+	private int getSESCode() {
+		int min = 100000;
+		int max = 999999;
+		return (int) (Math.random() * (max - min + 1) + min);
 	}
 
 	/*
