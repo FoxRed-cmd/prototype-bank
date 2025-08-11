@@ -27,6 +27,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+
+import neo.study.deal.config.EmailThemesContent;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
@@ -66,6 +68,8 @@ public class DealServiceTest {
 	private KafkaTemplate<String, EmailMessage> kafkaTemplate;
 	@Mock
 	private FinishRegistrationRequestDto requestRegistration;
+	@Mock
+	private EmailThemesContent emailThemesContent;
 
 	@InjectMocks
 	private DealService dealService;

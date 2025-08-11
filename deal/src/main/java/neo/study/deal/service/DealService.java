@@ -19,7 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import lombok.extern.slf4j.Slf4j;
-import neo.study.deal.config.EmailThemes;
+import neo.study.deal.config.EmailThemesContent;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
@@ -45,7 +45,7 @@ public class DealService {
 	private final CreditService creditService;
 	private final KafkaTemplate<String, EmailMessage> kafkaTemplate;
 
-	private final Map<String, String> emailThemes;
+	private final Map<String, String> emailThemesContent;
 
 	@Value("${services.calculator.offers-api}")
 	private String offersApi;
@@ -73,13 +73,13 @@ public class DealService {
 
 	public DealService(RestClient restClient, ClientService clientService,
 			StatementService statementService, CreditService creditService,
-			KafkaTemplate<String, EmailMessage> kafkaTemplate, EmailThemes emailThemes) {
+			KafkaTemplate<String, EmailMessage> kafkaTemplate, EmailThemesContent emailThemesContent) {
 		this.restClient = restClient;
 		this.clientService = clientService;
 		this.statementService = statementService;
 		this.creditService = creditService;
 		this.kafkaTemplate = kafkaTemplate;
-		this.emailThemes = emailThemes.getThemes();
+		this.emailThemesContent = emailThemesContent.getThemes();
 	}
 
 	/*
@@ -162,7 +162,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
-				emailThemes.get(EmailTheme.FINISH_REGISTRATION.toString().toLowerCase()));
+				emailThemesContent.get(EmailTheme.FINISH_REGISTRATION.toString().toLowerCase()));
 
 		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 
@@ -214,7 +214,7 @@ public class DealService {
 
 		EmailMessage emailMessage = createEmailMessage(client.getEmail(), statement.getId(),
 				EmailTheme.REGISTRATION_DOCUMENTS,
-				emailThemes.get(EmailTheme.REGISTRATION_DOCUMENTS.toString().toLowerCase()));
+				emailThemesContent.get(EmailTheme.REGISTRATION_DOCUMENTS.toString().toLowerCase()));
 
 		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 	}
@@ -242,7 +242,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
-				emailThemes.get(EmailTheme.DOCUMENT_CREATED.toString().toLowerCase()));
+				emailThemesContent.get(EmailTheme.DOCUMENT_CREATED.toString().toLowerCase()));
 
 		CompletableFuture<SendResult<String, EmailMessage>> future = kafkaTemplate.send(sendDocumentsTopic,
 				emailMessage);
@@ -273,7 +273,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
-				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase()) + getSESCode());
+				emailThemesContent.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase()) + getSESCode());
 
 		kafkaTemplate.send(sendSesTopic, emailMessage);
 
@@ -302,7 +302,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
-				emailThemes.get(EmailTheme.CREDIT_ISSUED.toString().toLowerCase()));
+				emailThemesContent.get(EmailTheme.CREDIT_ISSUED.toString().toLowerCase()));
 
 		kafkaTemplate.send(creditIssuedTopic, emailMessage);
 

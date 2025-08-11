@@ -10,7 +10,7 @@ import lombok.Getter;
 @ConfigurationProperties(prefix = "spring.email")
 @AllArgsConstructor
 @Getter
-public class EmailThemes {
+public class EmailThemesContent {
     private Map<String, String> themes;
 
 }
