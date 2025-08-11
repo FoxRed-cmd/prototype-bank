@@ -3,6 +3,7 @@ package neo.study.deal.service;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import lombok.extern.slf4j.Slf4j;
+import neo.study.deal.config.EmailThemes;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
@@ -37,17 +39,13 @@ import neo.study.deal.utils.mapper.StatementMapper;
 @Slf4j
 @Service
 public class DealService {
-	private static final String REGISTRATION_DOCUMENTS = "Перейти к оформлению документов";
-	private static final String DOCUMENT_CREATED = "Документы созданы";
-	private static final String FINISH_REGISTRATION = "Завершите оформление";
-	private static final String SIGN_DOCUMENTS = "Ссылка на подписание документов и код ПЭП";
-	private static final String CREDIT_ISSUED = "Кредит одобрен";
-
 	private final RestClient restClient;
 	private final ClientService clientService;
 	private final StatementService statementService;
 	private final CreditService creditService;
 	private final KafkaTemplate<String, EmailMessage> kafkaTemplate;
+
+	private final Map<String, String> emailThemes;
 
 	@Value("${services.calculator.offers-api}")
 	private String offersApi;
@@ -75,12 +73,13 @@ public class DealService {
 
 	public DealService(RestClient restClient, ClientService clientService,
 			StatementService statementService, CreditService creditService,
-			KafkaTemplate<String, EmailMessage> kafkaTemplate) {
+			KafkaTemplate<String, EmailMessage> kafkaTemplate, EmailThemes emailThemes) {
 		this.restClient = restClient;
 		this.clientService = clientService;
 		this.statementService = statementService;
 		this.creditService = creditService;
 		this.kafkaTemplate = kafkaTemplate;
+		this.emailThemes = emailThemes.getThemes();
 	}
 
 	/*
@@ -163,7 +162,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.FINISH_REGISTRATION,
-				FINISH_REGISTRATION);
+				emailThemes.get(EmailTheme.FINISH_REGISTRATION.toString().toLowerCase()));
 
 		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 
@@ -214,7 +213,8 @@ public class DealService {
 		client = clientService.update(client);
 
 		EmailMessage emailMessage = createEmailMessage(client.getEmail(), statement.getId(),
-				EmailTheme.REGISTRATION_DOCUMENTS, REGISTRATION_DOCUMENTS);
+				EmailTheme.REGISTRATION_DOCUMENTS,
+				emailThemes.get(EmailTheme.REGISTRATION_DOCUMENTS.toString().toLowerCase()));
 
 		kafkaTemplate.send(finishRegistrationTopic, emailMessage);
 	}
@@ -242,7 +242,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
-				DOCUMENT_CREATED);
+				emailThemes.get(EmailTheme.DOCUMENT_CREATED.toString().toLowerCase()));
 
 		CompletableFuture<SendResult<String, EmailMessage>> future = kafkaTemplate.send(sendDocumentsTopic,
 				emailMessage);
@@ -273,7 +273,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
-				SIGN_DOCUMENTS);
+				emailThemes.get(EmailTheme.SIGN_DOCUMENTS.toString().toLowerCase()));
 
 		kafkaTemplate.send(sendSesTopic, emailMessage);
 
@@ -302,7 +302,7 @@ public class DealService {
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.CREDIT_ISSUED,
-				CREDIT_ISSUED);
+				emailThemes.get(EmailTheme.CREDIT_ISSUED.toString().toLowerCase()));
 
 		kafkaTemplate.send(creditIssuedTopic, emailMessage);
 

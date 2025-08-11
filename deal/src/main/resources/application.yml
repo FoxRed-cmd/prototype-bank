@@ -42,6 +42,13 @@ spring:
                 name: statement-denied
                 partitions: 3
                 replicas: 1
+    email:
+        themes:
+            finish_registration: ${FINISH_REGISTRATION_TEXT:Пожалуйста, завершите оформление заявки в личном кабинете на сайте или в мобильном приложении.}
+            registration_documents: ${REGISTRATION_DOCUMENTS_TEXT:Ваша заявка сформирована. Пожалуйста, продолжите оформление документов на сайте или в мобильном приложении.}
+            document_created: ${DOCUMENT_CREATED_TEXT:Документы по вашей заявке были сформированы. Ознакомится и подписать их можно в личном кабинете.}
+            sign_documents: ${SIGN_DOCUMENTS_TEXT:Для завершения подпишите документы в личном кабинете, код ПЭП - }
+            credit_issued: ${CREDIT_ISSUED_TEXT:Кредит одобрен, деньги поступят на указанный счет в течение 10 минут}
 springdoc:
     swagger-ui:
         url: /openapi.yaml
