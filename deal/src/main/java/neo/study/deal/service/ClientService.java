@@ -50,4 +50,9 @@ public class ClientService {
 
         return clientRepository.save(client);
     }
+
+    public Client update(Client client) {
+        log.debug("Start updating client: {}", client);
+        return clientRepository.save(client);
+    }
 }

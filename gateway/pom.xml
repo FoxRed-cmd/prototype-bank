@@ -10,9 +10,9 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>neo.study</groupId>
-	<artifactId>dossier</artifactId>
+	<artifactId>gateway</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>dossier</name>
+	<name>gateway</name>
 	<description>Demo project for Spring Boot</description>
 	<url />
 	<licenses>
@@ -33,15 +33,12 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.8</version>
 		</dependency>
 
 		<dependency>
@@ -49,23 +46,26 @@
 			<artifactId>swagger-parser</artifactId>
 			<version>2.1.30</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>logging-interceptor</artifactId>
 			<version>4.12.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>io.gsonfire</groupId>
 			<artifactId>gson-fire</artifactId>
 			<version>1.9.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>javax.annotation</groupId>
 			<artifactId>javax.annotation-api</artifactId>
 			<version>1.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>4.0.1</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -76,11 +76,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -123,8 +118,8 @@
 					</execution>
 				</executions>
 				<configuration>
-					<inputSpec>${project.basedir}/src/main/resources/openapi.yaml</inputSpec>
-					<modelPackage>neo.study.deal.dto</modelPackage>
+					<inputSpec>${project.basedir}/src/main/resources/static/openapi.yaml</inputSpec>
+					<modelPackage>neo.study.gateway.dto</modelPackage>
 					<generatorName>java</generatorName>
 					<generateApiDocumentation>false</generateApiDocumentation>
 					<generateModelDocumentation>false</generateModelDocumentation>

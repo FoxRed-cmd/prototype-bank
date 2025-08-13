@@ -27,13 +27,18 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+
+import neo.study.deal.config.EmailThemesContent;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
 import neo.study.deal.dto.EmailMessage;
+import neo.study.deal.dto.EmploymentDto;
+import neo.study.deal.dto.EmploymentStatus;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
 import neo.study.deal.dto.LoanOfferDto;
 import neo.study.deal.dto.LoanStatementRequestDto;
+import neo.study.deal.dto.Position;
 import neo.study.deal.dto.ScoringDataDto;
 import neo.study.deal.entity.Client;
 import neo.study.deal.entity.Credit;
@@ -61,6 +66,10 @@ public class DealServiceTest {
 	private CreditService creditService;
 	@Mock
 	private KafkaTemplate<String, EmailMessage> kafkaTemplate;
+	@Mock
+	private FinishRegistrationRequestDto requestRegistration;
+	@Mock
+	private EmailThemesContent emailThemesContent;
 
 	@InjectMocks
 	private DealService dealService;
@@ -93,7 +102,7 @@ public class DealServiceTest {
 		Mockito.when(clientService.create(request)).thenReturn(client);
 		Mockito.when(statementService.create(client)).thenReturn(statement);
 
-		var result = dealService.statementProcessing(request);
+		var result = dealService.processStatement(request);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -115,7 +124,7 @@ public class DealServiceTest {
 
 		HttpClientErrorException exception = assertThrows(
 				HttpClientErrorException.class,
-				() -> dealService.statementProcessing(request));
+				() -> dealService.processStatement(request));
 
 		// Дополнительные проверки на исключение
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
@@ -160,6 +169,16 @@ public class DealServiceTest {
 		client.setMiddleName("Иванович");
 		client.setEmail("test@example.com");
 
+		var employmentDto = new EmploymentDto();
+		employmentDto.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+		employmentDto.setEmployerINN("123456789021");
+		employmentDto.setSalary(BigDecimal.valueOf(45000));
+		employmentDto.setPosition(Position.MIDDLE_MANAGER);
+		employmentDto.setWorkExperienceTotal(24);
+		employmentDto.setWorkExperienceCurrent(12);
+
+		request.setEmployment(employmentDto);
+
 		var passport = new Passport(UUID.randomUUID(), "1234", "567890", null, null);
 		client.setPassport(passport);
 
@@ -171,6 +190,7 @@ public class DealServiceTest {
 		var creditDto = new CreditDto();
 
 		Mockito.when(statementService.getById(statementId)).thenReturn(statement);
+
 		Mockito.when(restClient.post()).thenReturn(uriSpec);
 		Mockito.when(uriSpec.uri("/calculator/calc")).thenReturn(bodySpec);
 		Mockito.when(bodySpec.body(Mockito.any(ScoringDataDto.class))).thenReturn(bodySpec);
@@ -180,6 +200,8 @@ public class DealServiceTest {
 		Mockito.when(creditService.create(creditDto)).thenReturn(new Credit());
 		Mockito.when(statementService.updateStatus(statement, ApplicationStatus.CC_APPROVED,
 				ChangeType.AUTOMATIC)).thenReturn(statement);
+
+		Mockito.when(clientService.update(Mockito.any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		dealService.finishRegistration(statementId.toString(), request);
 

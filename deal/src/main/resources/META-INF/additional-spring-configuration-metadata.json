@@ -103,5 +103,30 @@
     "name": "spring.kafka.topics.statement-denied.replicas",
     "type": "java.lang.String",
     "description": "A description for 'spring.kafka.topics.statement-denied.replicas'"
+  },
+  {
+    "name": "spring.email.themes.finish-registration",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.email.themes.finish-registration'"
+  },
+  {
+    "name": "spring.email.themes.registration_documents",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.email.themes.registration_documents'"
+  },
+  {
+    "name": "spring.email.themes.document-created",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.email.themes.document-created'"
+  },
+  {
+    "name": "spring.email.themes.sign_documents",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.email.themes.sign_documents'"
+  },
+  {
+    "name": "spring.email.themes.credit_issued",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.email.themes.credit_issued'"
   }
 ]}

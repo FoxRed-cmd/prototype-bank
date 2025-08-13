@@ -83,10 +83,16 @@ mvn -f .\statement\pom.xml spring-boot:run
 ${env:MAIL_USERNAME}='YOUR_EMAIL'; ${env:MAIL_PASSWORD}='YOUR_APP_PASSWORD';  mvn -f .\dossier\pom.xml spring-boot:run
 ```
 
+### 7. Launch of the api-gateway
+
+```Shell
+mvn -f .\gateway\pom.xml spring-boot:run
+```
+
 ### Run all services in the background
 
 ```Shell
-mvn -f .\calculator\pom.xml spring-boot:run & mvn -f .\statement\pom.xml spring-boot:run & ${env:URL_DB}='YOUR DB URL'; ${env:USER_DB}='YOUR USERNAME'; ${env:PASSWORD_DB}='YOUR STRONG PASSWORD'; mvn -f .\deal\pom.xml spring-boot:run & ${env:MAIL_USERNAME}='YOUR_EMAIL'; ${env:MAIL_PASSWORD}='YOUR_APP_PASSWORD'; mvn -f .\dossier\pom.xml spring-boot:run
+mvn -f .\calculator\pom.xml spring-boot:run & mvn -f .\statement\pom.xml spring-boot:run & ${env:URL_DB}='YOUR DB URL'; ${env:USER_DB}='YOUR USERNAME'; ${env:PASSWORD_DB}='YOUR STRONG PASSWORD'; mvn -f .\deal\pom.xml spring-boot:run & ${env:MAIL_USERNAME}='YOUR_EMAIL'; ${env:MAIL_PASSWORD}='YOUR_APP_PASSWORD'; mvn -f .\dossier\pom.xml spring-boot:run & mvn -f .\gateway\pom.xml spring-boot:run
 ```
 
 ## 📗 SwaggerUI
@@ -94,6 +100,7 @@ mvn -f .\calculator\pom.xml spring-boot:run & mvn -f .\statement\pom.xml spring-
 -   **MVP 1 Calculator:** http://localhost:8080/swagger-ui/index.html
 -   **MVP 2 Deal:** http://localhost:8081/swagger-ui/index.html
 -   **MVP 3 Statement:** http://localhost:8082/swagger-ui/index.html
+-   **MVP 5 API-Gateway:** http://localhost:8083/swagger-ui/index.html
 
 ## Valid JSON examples
 

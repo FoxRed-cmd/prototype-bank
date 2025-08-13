@@ -1,16 +1,16 @@
 openapi: 3.1.0
 info:
-    title: Deal API
+    title: Gateway API
     version: 1.0.0
 servers:
-    - url: "http://localhost:8081"
+    - url: http://localhost:8083
       description: Generated server url
 paths:
-    /deal/statement:
+    /statement:
         post:
             tags:
-                - deal-controller
-            operationId: statementProcessing
+                - gateway-controller
+            operationId: processStatement
             requestBody:
                 content:
                     application/json:
@@ -26,10 +26,10 @@ paths:
                                 type: array
                                 items:
                                     $ref: "#/components/schemas/LoanOfferDto"
-    /deal/offer/select:
+    /statement/offer:
         post:
             tags:
-                - deal-controller
+                - gateway-controller
             operationId: selectOffer
             requestBody:
                 content:
@@ -38,13 +38,55 @@ paths:
                             $ref: "#/components/schemas/LoanOfferDto"
                 required: true
             responses:
-                "200":
+                200:
                     description: OK
-    "/deal/calculate/{statementId}":
+    /deal/document/{statementId}/sign:
         post:
             tags:
-                - deal-controller
-            operationId: registrationComplete
+                - gateway-controller
+            operationId: signDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/document/{statementId}/send:
+        post:
+            tags:
+                - gateway-controller
+            operationId: sendDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/document/{statementId}/code:
+        post:
+            tags:
+                - gateway-controller
+            operationId: codeDocuments
+            parameters:
+                - name: statementId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: OK
+    /deal/calculate/{statementId}:
+        post:
+            tags:
+                - gateway-controller
+            operationId: completeRegistration
             parameters:
                 - name: statementId
                   in: path
@@ -58,54 +100,12 @@ paths:
                             $ref: "#/components/schemas/FinishRegistrationRequestDto"
                 required: true
             responses:
-                "200":
-                    description: OK
-    "/deal/document/{statementId}/send":
-        post:
-            tags:
-                - deal-controller
-            operationId: sendDocuments
-            parameters:
-                - name: statementId
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: OK
-    "/deal/document/{statementId}/sign":
-        post:
-            tags:
-                - deal-controller
-            operationId: signDocuments
-            parameters:
-                - name: statementId
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: OK
-    "/deal/document/{statementId}/code":
-        post:
-            tags:
-                - deal-controller
-            operationId: codeDocuments
-            parameters:
-                - name: statementId
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
+                200:
                     description: OK
     "/deal/admin/statement/{statementId}/status":
         put:
             tags:
-                - deal-controller
+                - gateway-controller
             operationId: updateStatementStatus
             parameters:
                 - name: statementId
@@ -130,7 +130,7 @@ paths:
     "/deal/admin/statement/{statementId}":
         get:
             tags:
-                - deal-controller
+                - gateway-controller
             operationId: getStatement
             parameters:
                 - name: statementId
@@ -224,65 +224,29 @@ components:
                     format: int32
                     example: 12
 
-        ScoringDataDto:
+        FinishRegistrationRequestDto:
             type: object
             properties:
-                amount:
-                    type: number
-                term:
-                    type: integer
-                    format: int32
-                firstName:
-                    type: string
-                lastName:
-                    type: string
-                middleName:
-                    type: string
                 gender:
                     $ref: "#/components/schemas/Gender"
-                birthdate:
-                    type: string
-                    format: date
-                passportSeries:
-                    type: string
-                passportNumber:
-                    type: string
-                passportIssueDate:
-                    type: string
-                    format: date
-                passportIssueBranch:
-                    type: string
                 maritalStatus:
                     $ref: "#/components/schemas/MaritalStatus"
                 dependentAmount:
                     type: integer
                     format: int32
+                    example: 1
+                passportIssueDate:
+                    type: string
+                    format: date
+                    example: 2010-01-01
+                passportIssueBranch:
+                    type: string
+                    example: УФМС г. Москвы
                 employment:
                     $ref: "#/components/schemas/EmploymentDto"
                 accountNumber:
                     type: string
-                isInsuranceEnabled:
-                    type: boolean
-                isSalaryClient:
-                    type: boolean
-
-        PaymentScheduleElementDto:
-            type: object
-            properties:
-                number:
-                    type: integer
-                    format: int32
-                date:
-                    type: string
-                    format: date
-                totalPayment:
-                    type: number
-                interestPayment:
-                    type: number
-                debtPayment:
-                    type: number
-                remainingDebt:
-                    type: number
+                    example: 12345678901234567890
 
         StatementDto:
             type: object
@@ -316,65 +280,6 @@ components:
                 changeType:
                     $ref: "#/components/schemas/ChangeType"
 
-        FinishRegistrationRequestDto:
-            type: object
-            properties:
-                gender:
-                    $ref: "#/components/schemas/Gender"
-                maritalStatus:
-                    $ref: "#/components/schemas/MaritalStatus"
-                dependentAmount:
-                    type: integer
-                    format: int32
-                    example: 1
-                passportIssueDate:
-                    type: string
-                    format: date
-                    example: 2010-01-01
-                passportIssueBranch:
-                    type: string
-                    example: УФМС г. Москвы
-                employment:
-                    $ref: "#/components/schemas/EmploymentDto"
-                accountNumber:
-                    type: string
-                    example: 12345678901234567890
-
-        CreditDto:
-            type: object
-            properties:
-                amount:
-                    type: number
-                term:
-                    type: integer
-                    format: int32
-                monthlyPayment:
-                    type: number
-                rate:
-                    type: number
-                psk:
-                    type: number
-                isInsuranceEnabled:
-                    type: boolean
-                isSalaryClient:
-                    type: boolean
-                paymentSchedule:
-                    type: array
-                    items:
-                        $ref: "#/components/schemas/PaymentScheduleElementDto"
-
-        EmailMessage:
-            type: object
-            properties:
-                address:
-                    type: string
-                theme:
-                    $ref: "#/components/schemas/EmailTheme"
-                statementId:
-                    type: string
-                text:
-                    type: string
-
         Gender:
             type: string
             enum: [MALE, FEMALE]
@@ -387,9 +292,6 @@ components:
         Position:
             type: string
             enum: [MIDDLE_MANAGER, TOP_MANAGER]
-        CreditStatus:
-            type: string
-            enum: [CALCULATED, ISSUED]
         ApplicationStatus:
             type: string
             enum:
@@ -407,13 +309,3 @@ components:
         ChangeType:
             type: string
             enum: [AUTOMATIC, MANUAL]
-        EmailTheme:
-            type: string
-            enum:
-                [
-                    FINISH_REGISTRATION,
-                    REGISTRATION_DOCUMENTS,
-                    DOCUMENT_CREATED,
-                    SIGN_DOCUMENTS,
-                    CREDIT_ISSUED,
-                ]
