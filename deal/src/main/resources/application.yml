@@ -53,10 +53,10 @@ springdoc:
     swagger-ui:
         url: /openapi.yaml
 server:
-    port: 8081
+    port: ${PORT:8081}
 services:
     calculator:
-        base-url: http://localhost:8080
+        base-url: ${CALCULATOR_ADDRESS:http://localhost:8080}
         offers-api: /calculator/offers
         calc-api: /calculator/calc
 logging:
