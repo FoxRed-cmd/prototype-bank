@@ -1,4 +1,4 @@
-package neo.study.calculator.config;
+package neo.study.statement.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,8 +8,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig {
-    @Value("${allowed-services.deal}")
-    private String allowedDeal;
+    @Value("${allowed-services.gateway}")
+    private String allowedGateway;
 
     @Bean
     WebMvcConfigurer corsConfigurer() {
@@ -17,12 +17,11 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(allowedDeal)
+                        .allowedOrigins(allowedGateway)
                         .allowedMethods("POST")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }
         };
     }
-
 }

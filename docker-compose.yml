@@ -55,6 +55,8 @@ services:
             PASSWORD_DB: ${POSTGRES_PASSWORD}
             KAFKA_SERVERS: ${KAFKA_SERVERS}
             CALCULATOR_ADDRESS: ${CALCULATOR_ADDRESS}
+            STATEMENT_ADDRESS: ${STATEMENT_ADDRESS}
+            GATEWAY_ADDRESS: ${GATEWAY_ADDRESS}
             PORT: ${DEAL_PORT}
         ports:
             - "${DEAL_PORT}:${DEAL_PORT}"
@@ -64,3 +66,39 @@ services:
             - kafka
             - postgres
             - calculator
+
+    dossier:
+        build: ./dossier
+        environment:
+            KAFKA_SERVERS: ${KAFKA_SERVERS}
+            MAIL_USERNAME: ${MAIL_USERNAME}
+            MAIL_PASSWORD: ${MAIL_PASSWORD}
+            PORT: ${DOSSIER_PORT}
+        ports:
+            - "${DOSSIER_PORT}:${DOSSIER_PORT}"
+        env_file:
+            - .env
+        depends_on:
+            - deal
+
+    statement:
+        build: ./statement
+        environment:
+            DEAL_ADDRESS: ${DEAL_ADDRESS}
+            GATEWAY_ADDRESS: ${GATEWAY_ADDRESS}
+            PORT: ${STATEMENT_PORT}
+        ports:
+            - "${STATEMENT_PORT}:${STATEMENT_PORT}"
+        env_file:
+            - .env
+
+    gateway:
+        build: ./gateway
+        environment:
+            DEAL_ADDRESS: ${DEAL_ADDRESS}
+            STATEMENT_ADDRESS: ${STATEMENT_ADDRESS}
+            PORT: ${GATEWAY_PORT}
+        ports:
+            - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+        env_file:
+            - .env
