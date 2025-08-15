@@ -3,6 +3,7 @@
 ![Static Badge](https://img.shields.io/badge/Spring%20Boot-3.4.x-green?logo=spring&logoColor=green)
 ![Static Badge](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=orange)
 ![Static Badge](https://img.shields.io/badge/Maven-3.9.9-blue?logo=apache&logoColor=blue)
+[![codecov](https://codecov.io/gh/FoxRed-cmd/prototype-bank/graph/badge.svg?token=LQT14GWYOU)](https://codecov.io/gh/FoxRed-cmd/prototype-bank)
 
 ## 🚀 Startup
 
