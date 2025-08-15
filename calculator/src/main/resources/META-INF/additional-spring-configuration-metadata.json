@@ -1,0 +1,27 @@
+{"properties": [
+  {
+    "name": "loan.base-rate",
+    "type": "java.lang.String",
+    "description": "A description for 'loan.base-rate'"
+  },
+  {
+    "name": "loan.insurance-discount",
+    "type": "java.lang.String",
+    "description": "A description for 'loan.insurance-discount'"
+  },
+  {
+    "name": "loan.salary-client-discount",
+    "type": "java.lang.String",
+    "description": "A description for 'loan.salary-client-discount'"
+  },
+  {
+    "name": "loan.insurance-cost-percent",
+    "type": "java.lang.String",
+    "description": "A description for 'loan.insurance-cost-percent'"
+  },
+  {
+    "name": "allowed-services.deal",
+    "type": "java.lang.String",
+    "description": "A description for 'allowed-services.deal'"
+  }
+]}

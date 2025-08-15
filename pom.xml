@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>neo.study</groupId>
+    <artifactId>prototype-bank</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>prototype-bank</name>
+
+    <modules>
+        <module>calculator</module>
+        <module>deal</module>
+        <module>dossier</module>
+        <module>statement</module>
+        <module>gateway</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <sonar.projectKey>FoxRed-cmd_prototype-bank</sonar.projectKey>
+        <sonar.organization>foxred-cmd</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    </properties>
+
+</project>

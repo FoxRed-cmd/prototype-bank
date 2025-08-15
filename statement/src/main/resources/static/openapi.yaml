@@ -1,0 +1,95 @@
+openapi: 3.1.0
+info:
+    title: Statement DTO
+    version: 1.0.0
+paths:
+    /statement:
+        post:
+            tags:
+                - statement-controller
+            operationId: prescoring
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanStatementRequestDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        "*/*":
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/LoanOfferDto"
+    /statement/offer:
+        post:
+            tags:
+                - statement-controller
+            operationId: selectOffer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/LoanOfferDto"
+                required: true
+            responses:
+                "200":
+                    description: OK
+components:
+    schemas:
+        LoanStatementRequestDto:
+            type: object
+            properties:
+                amount:
+                    type: number
+                    example: 150000
+                term:
+                    type: integer
+                    example: 12
+                    format: int32
+                firstName:
+                    type: string
+                    example: Иван
+                lastName:
+                    type: string
+                    example: Иванов
+                middleName:
+                    type: string
+                    example: Иванович
+                email:
+                    type: string
+                    example: 3J7wI@example.com
+                birthDate:
+                    type: string
+                    example: 2000-01-01
+                    format: date
+                passportSeries:
+                    type: string
+                    example: 1234
+                passportNumber:
+                    type: string
+                    example: 123456
+
+        LoanOfferDto:
+            type: object
+            properties:
+                statementId:
+                    type: string
+                    format: uuid
+                requestedAmount:
+                    type: number
+                totalAmount:
+                    type: number
+                term:
+                    type: integer
+                    format: int32
+                monthlyPayment:
+                    type: number
+                rate:
+                    type: number
+                isInsuranceEnabled:
+                    type: boolean
+                isSalaryClient:
+                    type: boolean
