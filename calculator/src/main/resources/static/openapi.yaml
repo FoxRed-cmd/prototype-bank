@@ -2,9 +2,6 @@ openapi: 3.1.0
 info:
     title: Calculator API
     version: 1.0.0
-servers:
-    - url: "http://localhost:8080"
-      description: Generated server url
 paths:
     /calculator/offers:
         post:

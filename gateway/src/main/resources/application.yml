@@ -2,13 +2,13 @@ spring:
     application:
         name: gateway
 server:
-    port: 8083
+    port: ${PORT:8083}
 springdoc:
     swagger-ui:
         url: /openapi.yaml
 services:
     deal:
-        base-url: http://localhost:8081
+        base-url: ${DEAL_ADDRESS:http://localhost:8081}
         complete-registration-api: /deal/calculate/{statementId}
         send-documents-api: /deal/document/{statementId}/send
         sign-documents-api: /deal/document/{statementId}/sign
@@ -16,7 +16,7 @@ services:
         get-statement-api: /deal/admin/statement/{statementId}
         update-statement-api: /deal/admin/statement/{statementId}/status
     statement:
-        base-url: http://localhost:8082
+        base-url: ${STATEMENT_ADDRESS:http://localhost:8082}
         process-statement-api: /statement
         select-offer-api: /statement/offer
 logging:

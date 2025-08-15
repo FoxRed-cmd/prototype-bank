@@ -14,3 +14,7 @@ logging:
         console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     level:
         root: INFO
+allowed-services:
+    deal: ${DEAL_ADDRESS:http://localhost:8081}
+server:
+    port: ${PORT:8080}

@@ -2,12 +2,14 @@ spring:
     application:
         name: statement
 server:
-    port: 8082
+    port: ${PORT:8082}
 services:
     deal:
-        base-url: http://localhost:8081
+        base-url: ${DEAL_ADDRESS:http://localhost:8081}
         statement-api: /deal/statement
         select-api: /deal/offer/select
+allowed-services:
+    gateway: ${GATEWAY_ADDRESS:http://localhost:8083}
 springdoc:
     swagger-ui:
         url: /openapi.yaml

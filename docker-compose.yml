@@ -4,20 +4,101 @@ services:
     zookeeper:
         image: confluentinc/cp-zookeeper:7.2.15
         environment:
-            ZOOKEEPER_CLIENT_PORT: 2181
-            ZOOKEEPER_TICK_TIME: 2000
+            ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+            ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
         ports:
-            - "2181:2181"
+            - "${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}"
+        env_file:
+            - .env
 
     kafka:
         image: confluentinc/cp-kafka:7.2.15
         depends_on:
             - zookeeper
         ports:
-            - "29092:29092"
+            - "${KAFKA_PORT1}:${KAFKA_PORT1}"
         environment:
             KAFKA_BROKER_ID: 1
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+            KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        env_file:
+            - .env
+
+    postgres:
+        image: postgres:latest
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+        env_file:
+            - .env
+
+    calculator:
+        build: ./calculator
+        environment:
+            PORT: ${CALCULATOR_PORT}
+            DEAL_ADDRESS: ${DEAL_ADDRESS}
+        ports:
+            - "${CALCULATOR_PORT}:${CALCULATOR_PORT}"
+        env_file:
+            - .env
+
+    deal:
+        build: ./deal
+        environment:
+            URL_DB: ${URL_DB}
+            USER_DB: ${POSTGRES_USER}
+            PASSWORD_DB: ${POSTGRES_PASSWORD}
+            KAFKA_SERVERS: ${KAFKA_SERVERS}
+            CALCULATOR_ADDRESS: ${CALCULATOR_ADDRESS}
+            STATEMENT_ADDRESS: ${STATEMENT_ADDRESS}
+            GATEWAY_ADDRESS: ${GATEWAY_ADDRESS}
+            PORT: ${DEAL_PORT}
+        ports:
+            - "${DEAL_PORT}:${DEAL_PORT}"
+        env_file:
+            - .env
+        depends_on:
+            - kafka
+            - postgres
+            - calculator
+
+    dossier:
+        build: ./dossier
+        environment:
+            KAFKA_SERVERS: ${KAFKA_SERVERS}
+            MAIL_USERNAME: ${MAIL_USERNAME}
+            MAIL_PASSWORD: ${MAIL_PASSWORD}
+            PORT: ${DOSSIER_PORT}
+        ports:
+            - "${DOSSIER_PORT}:${DOSSIER_PORT}"
+        env_file:
+            - .env
+        depends_on:
+            - deal
+
+    statement:
+        build: ./statement
+        environment:
+            DEAL_ADDRESS: ${DEAL_ADDRESS}
+            GATEWAY_ADDRESS: ${GATEWAY_ADDRESS}
+            PORT: ${STATEMENT_PORT}
+        ports:
+            - "${STATEMENT_PORT}:${STATEMENT_PORT}"
+        env_file:
+            - .env
+
+    gateway:
+        build: ./gateway
+        environment:
+            DEAL_ADDRESS: ${DEAL_ADDRESS}
+            STATEMENT_ADDRESS: ${STATEMENT_ADDRESS}
+            PORT: ${GATEWAY_PORT}
+        ports:
+            - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+        env_file:
+            - .env
