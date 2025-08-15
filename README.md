@@ -4,6 +4,13 @@
 ![Static Badge](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=orange)
 ![Static Badge](https://img.shields.io/badge/Maven-3.9.9-blue?logo=apache&logoColor=blue)
 [![codecov](https://codecov.io/gh/FoxRed-cmd/prototype-bank/graph/badge.svg?token=LQT14GWYOU)](https://codecov.io/gh/FoxRed-cmd/prototype-bank)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=coverage)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=FoxRed-cmd_prototype-bank&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=FoxRed-cmd_prototype-bank)
 
 ## 🚀 Startup
 
