@@ -23,7 +23,6 @@ import neo.study.deal.config.EmailThemesContent;
 import neo.study.deal.dto.ApplicationStatus;
 import neo.study.deal.dto.ChangeType;
 import neo.study.deal.dto.CreditDto;
-import neo.study.deal.dto.CreditStatus;
 import neo.study.deal.dto.EmailMessage;
 import neo.study.deal.dto.EmailTheme;
 import neo.study.deal.dto.FinishRegistrationRequestDto;
@@ -239,6 +238,11 @@ public class DealService {
 		var statement = statementService.updateStatusById(UUID.fromString(statementId),
 				ApplicationStatus.PREPARE_DOCUMENTS,
 				ChangeType.AUTOMATIC);
+
+		if (!creditIsExist(statement)) {
+			throw new ResourceAccessException("Credit was not calculated for the current statement");
+		}
+
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.DOCUMENT_CREATED,
@@ -270,6 +274,11 @@ public class DealService {
 		var statement = statementService.updateStatusById(UUID.fromString(statementId),
 				ApplicationStatus.DOCUMENT_SIGNED,
 				ChangeType.AUTOMATIC);
+
+		if (!creditIsExist(statement)) {
+			throw new ResourceAccessException("Credit was not calculated for the current statement");
+		}
+
 		var clientEmail = statement.getClient().getEmail();
 
 		EmailMessage emailMessage = createEmailMessage(clientEmail, statement.getId(), EmailTheme.SIGN_DOCUMENTS,
@@ -292,8 +301,10 @@ public class DealService {
 				ApplicationStatus.CREDIT_ISSUED,
 				ChangeType.AUTOMATIC);
 
+		if (!creditIsExist(statement)) {
+			throw new ResourceAccessException("Credit was not calculated for the current statement");
+		}
 		var credit = statement.getCredit();
-		credit.setStatus(CreditStatus.ISSUED);
 
 		statement.setCredit(credit);
 		statement.setSignDate(LocalDate.now());
@@ -343,7 +354,6 @@ public class DealService {
 	/*
 	 * Обработка результата кредитного конвейера
 	 */
-	@Transactional
 	private void processRegistration(CreditDto creditDto, Statement statement) {
 		log.info("Start process registration for credit: {}", creditDto);
 
@@ -423,5 +433,9 @@ public class DealService {
 		client.setAccountNumber(requestRegistration.getAccountNumber());
 
 		return client;
+	}
+
+	private boolean creditIsExist(Statement statement) {
+		return Optional.ofNullable(statement.getCredit()).isPresent();
 	}
 }
