@@ -73,7 +73,7 @@ public class GatewayService {
     public void completeRegistration(String statementId, FinishRegistrationRequestDto requestRegistration) {
         log.debug("Complete registration for statement: {}", statementId);
         restClientToDeal.post()
-                .uri(completeRegistrationApi.replace("{statementId}", statementId))
+                .uri(completeRegistrationApi, statementId)
                 .body(requestRegistration)
                 .retrieve()
                 .toBodilessEntity();
@@ -82,7 +82,7 @@ public class GatewayService {
     public void sendDocuments(String statementId) {
         log.debug("Send documents for statement: {}", statementId);
         restClientToDeal.post()
-                .uri(sendDocumentsApi.replace("{statementId}", statementId))
+                .uri(sendDocumentsApi, statementId)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -90,7 +90,7 @@ public class GatewayService {
     public void signDocuments(String statementId) {
         log.debug("Sign documents for statement: {}", statementId);
         restClientToDeal.post()
-                .uri(signDocumentsApi.replace("{statementId}", statementId))
+                .uri(signDocumentsApi, statementId)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -98,7 +98,7 @@ public class GatewayService {
     public void codeDocuments(String statementId) {
         log.debug("Code documents for statement: {}", statementId);
         restClientToDeal.post()
-                .uri(codeDocumentsApi.replace("{statementId}", statementId))
+                .uri(codeDocumentsApi, statementId)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -106,7 +106,7 @@ public class GatewayService {
     public StatementDto getStatement(String statementId) {
         log.debug("Get statement: {}", statementId);
         return restClientToDeal.get()
-                .uri(getStatementApi.replace("{statementId}", statementId))
+                .uri(getStatementApi, statementId)
                 .retrieve()
                 .body(StatementDto.class);
     }
@@ -114,7 +114,7 @@ public class GatewayService {
     public StatementDto updateStatementStatus(String statementId, ApplicationStatus status) {
         log.debug("Update status for statement: {}", statementId);
         return restClientToDeal.put()
-                .uri(updateStatementApi.replace("{statementId}", statementId))
+                .uri(updateStatementApi, statementId)
                 .body(status)
                 .retrieve()
                 .body(StatementDto.class);
